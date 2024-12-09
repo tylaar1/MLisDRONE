@@ -8,9 +8,9 @@ class CustomController(FlightController):
     def __init__(self):
         self.alpha = 0.1  
         self.gamma = 0.9 
-        self.epsilon = 1.0  
+        self.epsilon = 1.0  #initialise epsilon
         self.epsilon_decay = 0.99
-        self.epsilon_min = 0.01
+        self.epsilon_min = 0.01 #so that episilon cant get too low
         
 
         self.actions = [ #as there are many options here we may get curse of dimensionality
@@ -24,7 +24,7 @@ class CustomController(FlightController):
         distance_to_target = np.sqrt((x - target_x)**2 + (y - target_y)**2)
 
         state= int(distance_to_target * 10)  #multiply by 10 means we essentially round to nearest 0.1 rathrer than nearest 1
-        state= min(state_bin, self.state_space_size - 1)  #make sure drone stays in screen 
+        state= min(state, self.state_space_size - 1)  #make sure drone stays in screen 
         #important for q learning as if space infinate drone can fly in wrong direction forever in name of exploration
 
         return state    

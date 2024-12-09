@@ -8,11 +8,8 @@ class CustomController(FlightController):
     def __init__(self):
         self.alpha = 0.1  
         self.gamma = 0.9 
-        self.epsilon = 1.0  #initialise epsilon
-        self.epsilon_decay = 0.99
-        self.epsilon_min = 0.01 #so that episilon cant get too low
-        
-
+        self.epsilon = 0.2 
+    
         self.actions = [ #as there are many options here we may get curse of dimensionality
             (round(thrust_left, 1), round(thrust_right, 1))
             for thrust_left in np.arange(0.0, 1.1, 0.1)

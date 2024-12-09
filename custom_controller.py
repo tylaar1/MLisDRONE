@@ -21,7 +21,7 @@ class CustomController(FlightController):
         self.q_table = {}
         self.state_space_size = 100
         
-    def get_reward(self):
+    # def get_reward(self):
        
         
     def train(self):

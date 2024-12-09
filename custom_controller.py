@@ -8,9 +8,9 @@ class CustomController(FlightController):
     def __init__(self):
         self.alpha = 0.1  
         self.gamma = 0.9 
-        self.epsilon = 1.0  
+        self.epsilon = 1.0  #initialise epsilon
         self.epsilon_decay = 0.99
-        self.epsilon_min = 0.01
+        self.epsilon_min = 0.01 #so that episilon cant get too low
         
 
         self.actions = [ #as there are many options here we may get curse of dimensionality
@@ -26,6 +26,8 @@ class CustomController(FlightController):
         
     def train(self):
         pass    
+    #epsilon greedy training policy to explore different routes
+    #targets appear in same locations each time so only have to learn the route rather than to fly specifically to target
     def get_thrusts(self, drone: Drone) -> Tuple[float, float]:
         return (0.5, 0.5) # Replace this with your custom algorithm
     def load(self):

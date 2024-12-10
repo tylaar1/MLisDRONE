@@ -26,7 +26,7 @@ class CustomController(FlightController):
     #epsilon greedy training policy to explore different routes
     #targets appear in same locations each time so only have to learn the route rather than to fly specifically to target
     def get_thrusts(self, drone: Drone) -> Tuple[float, float]:
-        return (0.5, 0.5) # Replace this with your custom algorithm
+        return (0.9, 0.45) # Replace this with your custom algorithm
     def load(self):
         pass
     def save(self):

@@ -12,7 +12,7 @@ class CustomController(FlightController):
 
         self.actions = [ #as there are many options here we may get curse of dimensionality
             (round(thrust_left, 1), round(thrust_right, 1))
-            for thrust_left in np.arange(0.0, 1.1, 0.1)
+            for thrust_left in np.arange(0.0, 1.1, 0.1) #changing to 0.2 would quater curse dimensionality - experiment for when model working
             for thrust_right in np.arange(0.0, 1.1, 0.1)
         ]
         self.q_table = {}
@@ -30,15 +30,58 @@ class CustomController(FlightController):
             reward = 100
         else:
             reward = -distance_to_target #directly encourage movement towards target as target is known
+            #can explore adding non linearity here once basic model working
         return reward 
        
         
-    def train(self):
-        pass    
-    #epsilon greedy training policy to explore different routes
-    #targets appear in same locations each time so only have to learn the route rather than to fly specifically to target
+    def train(self, drone, episodes, delta_t):
+       
+        for episode in range(episodes):
+        
+            drone.x, drone.y = 0, 0 #initialise coords- i think this is centre
+            total_reward = 0 #initialise reward
+
+            for step in range(10000):  #takes 10000 steps to find target(s)
+                
+                thrusts = self.get_thrusts(drone)
+                drone.set_thrust(thrusts)
+
+                distance_to_target = drone.step_simulation(delta_t)
+                reward = self.get_reward(distance_to_target)
+
+                # Discretize the current state
+                state = self.discretize_state(drone.x, drone.y, *drone.get_next_target())
+                # Next state
+                next_state = self.discretize_state(drone.x, drone.y, *drone.get_next_target())
+                
+                if state not in self.q_table: #initialise q value table each time a new state is entered
+                    self.q_table[state] = np.zeros(len(self.actions))
+                if next_state not in self.q_table:
+                    self.q_table[next_state] = np.zeros(len(self.actions))
+
+
+                action_idx = self.actions.index(thrusts)
+                q_update = reward + self.gamma * np.max(self.q_table[next_state]) - self.q_table[state][action_idx]
+                self.q_table[state][action_idx] += self.alpha * q_update
+
+
+                total_reward += reward
+
+            
     def get_thrusts(self, drone: Drone) -> Tuple[float, float]:
-        return (0.9, 0.45) # Replace this with your custom algorithm
+        state = self.discretize_state(drone.x, drone.y, *drone.get_next_target())
+        if state not in self.q_table:
+            self.q_table[state] = np.zeros(len(self.actions))
+        if np.random.rand() < self.epsilon: #epsilon greedy movement strategy
+            return self.actions[np.random.randint(len(self.actions))]
+        else:
+            q_values = self.q_table[state]
+            max_q_value = np.max(q_values)
+            max_q_indices = np.flatnonzero(q_values == max_q_value)  # Indices of max Q-values
+            chosen_idx = np.random.choice(max_q_indices)  # Random tie-breaking
+            return self.actions[chosen_idx]
+            
+
     def load(self):
         pass
     def save(self):

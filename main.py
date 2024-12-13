@@ -15,7 +15,7 @@ def generate_controller() -> FlightController:
     # return CustomController()
 
 def is_training() -> bool:
-    return False # <--- Replace this with True if you want to train, false otherwise
+    return True # <--- Replace this with True if you want to train, false otherwise - this currently throws error not sure why
 def is_saving() -> bool:
     return False # <--- Replace this with True if you want to save the results of training, false otherwise
 

@@ -3,13 +3,14 @@ from drone import Drone
 from typing import Tuple
 import numpy as np
 
-class CustomController(FlightController):
+class CustomController(FlightController,Drone):
     episodes=2
     def __init__(self):
+        super().__init__()
         self.alpha = 0.1  
         self.gamma = 0.9 
         self.epsilon = 0.2 
-
+        self.delta_time=0.01
         self.actions = [ #as there are many options here we may get curse of dimensionality
             (round(thrust_left, 1), round(thrust_right, 1))
             for thrust_left in np.arange(0.0, 1.1, 0.1) #changing to 0.2 would quater curse dimensionality - experiment for when model working
@@ -40,7 +41,8 @@ class CustomController(FlightController):
             reward = -distance_to_target #directly encourage movement towards target as target is known
             #can explore adding non linearity here once basic model working
         return reward 
-       
+    #will be implimented in train later
+    '''   
     def q_learning_formula(self, current_state, action, reward, next_state,):
         if state not in self.q_table: #initialise q value table each time a new state is entered
             self.q_table[state] = np.zeros(len(self.actions))
@@ -53,9 +55,9 @@ class CustomController(FlightController):
         #Q-learning formula
         new_q = current_q + self.alpha * (reward + self.gamma * max_next_q - current_q)
         self.q_table[current_state + (action,)] = new_q   
-     
+    ''' 
                 
-    def train(self, drone, episodes=2, delta_time=0.01): #i dont think these are actually doing anything idk why episode not working
+    def train(self, drone=Drone, episodes=2, delta_time=0.01): #i dont think these are actually doing anything idk why episode not working
         for episode in range(episodes):
         
             drone.x, drone.y = 0, 0 #initialise coords- i think this is centre
@@ -64,9 +66,9 @@ class CustomController(FlightController):
             for step in range(10000):  #this also dont seem to be working it gets initialised by flight controller class instead
                 
                 thrusts = self.get_thrusts(drone)
-                drone.set_thrust(thrusts)
+                self.set_thrust(thrusts)
 
-                distance_to_target = drone.step_simulation(delta_time)
+                distance_to_target = self.step_simulation()
                 reward = self.get_reward(distance_to_target)
 
                 #making the current state discreet
@@ -81,7 +83,7 @@ class CustomController(FlightController):
 
           
     def get_thrusts(self, drone: Drone) -> Tuple[float, float]:
-        state = self.discretize_state(drone.x, drone.y,drone.get_next_target()[0],drone.get_next_target()[1],drone.velocity_x,drone.velocity_y,drone.pitch,drone.pitch_velocity)
+        state = self.discretize_state(drone.x, drone.y,self.get_next_target()[0],self.get_next_target()[1],self.velocity_x,self.velocity_y,self.pitch,self.pitch_velocity)
         if state not in self.q_table:
             self.q_table[state] = np.zeros(len(self.actions))
         if np.random.rand() < self.epsilon: #epsilon greedy movement strategy
@@ -95,6 +97,10 @@ class CustomController(FlightController):
            
 
     def load(self):
+        filename = (f"./results/q_vals_")
+        self.q_values = np.load(filename)
         pass
     def save(self):
-        pass 
+        filename = (f"./results/q_vals_")
+        np.save(filename, self.q_values)
+            

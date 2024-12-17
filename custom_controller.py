@@ -7,10 +7,17 @@ import matplotlib.pyplot as plt
 class CustomController(FlightController):
 
     def __init__(self):
+# <<<<<<< Updated upstream
         self.alpha=0.1 #later these should have ways of varying these parameters to compare results
         self.gamma=0.9
         self.epsilon=0.2
         #later should add epsilon decay for more exploration at start more exploitation at end
+# =======
+        self.alpha = 0.1  
+        self.gamma = 0.9 
+        self.epsilon = 1.0  #initialise epsilon 
+
+# >>>>>>> Stashed changes
         self.actions = [ #as there are many options here we may get curse of dimensionality
             (round(thrust_left, 1), round(thrust_right, 1)) #round due to floating points
             for thrust_left in np.arange(0.0, 1.1, 0.1) #changing to 0.2 would quater curse dimensionality - experiment for when model working
@@ -84,6 +91,7 @@ class CustomController(FlightController):
         '''
         pass    
     def get_thrusts(self, drone: Drone) -> Tuple[float, float]:
+# <<<<<<< Updated upstream
         state=self.discretize_state(drone)
         if state not in self.q_values:
             self.q_values[state]=np.zeros(len(self.actions))#one q value per action
@@ -97,6 +105,11 @@ class CustomController(FlightController):
             left_thrust=0.55
             right_thrust=0.5
         return (left_thrust, right_thrust) # Replace this with your custom algorithm
+# =======
+        thrustleft = 0.5
+        thrustright = 0.5
+        return (thrustleft, thrustright) # Replace this with your custom algorithm
+# >>>>>>> Stashed changes
     def load(self):
         pass
     def save(self):

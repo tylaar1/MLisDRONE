@@ -11,8 +11,9 @@ from heuristic_controller import HeuristicController
 from Qlearning_controller import CustomController
 
 def generate_controller() -> FlightController:
-    return CustomController() # <--- Replace this with your own written controller
-    # return CustomController()
+    controller = CustomController()
+    if controller is None:
+        print("Model creation failed.")
 
 def is_training() -> bool:
     return True # <--- Replace this with True if you want to train, false otherwise - this currently throws error not sure why

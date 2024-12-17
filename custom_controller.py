@@ -7,16 +7,16 @@ import matplotlib.pyplot as plt
 class CustomController(FlightController):
 
     def __init__(self):
-        self.alpha=0.1 #later these should have ways of varying them to compare results
+        self.alpha=0.1 #later these should have ways of varying these parameters to compare results
         self.gamma=0.9
         self.epsilon=0.2
         #later should add epsilon decay for more exploration at start more exploitation at end
         self.actions = [ #as there are many options here we may get curse of dimensionality
-            (round(thrust_left, 1), round(thrust_right, 1))
+            (round(thrust_left, 1), round(thrust_right, 1)) #round due to floating points
             for thrust_left in np.arange(0.0, 1.1, 0.1) #changing to 0.2 would quater curse dimensionality - experiment for when model working
             for thrust_right in np.arange(0.0, 1.1, 0.1)
         ]
-        print(len(self.actions))
+        #print(len(self.actions))
         self.q_values={}
         self.state_size=64
     def discretize_state(self, drone:Drone):
@@ -30,7 +30,48 @@ class CustomController(FlightController):
         state=int(distance*10) #*10 means round to nearest .1 rather than 1
         return min(state,self.state_size-1) #this doesnt acc confine to screen just means state cant be further than 1 screen away no control over dynamics
     #room to expand state to include velocity,pitch
+    def reward(self,drone: Drone):
+        if drone.has_reached_target_last_update:
+            return 100
+        else:
+            return - self.discretize_state(drone) #this only works for now as states categorised by distance only, will need updating when discretize state updated
+        
+    def update_q_vals(self,drone: Drone):
+        '''
+        q vals update formula
+        '''
+        return 1 #check that code works up to here should see ones in dictionary corresponding to correct action and state  
     def train(self,drone: Drone):
+        epochs = 10 #number of training loops
+        cumulative_rewards=[]
+        for i in range(epochs):
+            actions=10 #max number action per loop (will add logic to stop loop once drone reaches target)
+            drone=Drone()
+            cumulative_reward=0
+            for i in range(actions):
+                thrusts = self.get_thrusts(drone) #want as percentage
+                state=self.discretize_state(drone) #could return from get thrusts but then have to modify drone.py which i am reluctant to do
+                print(thrusts) #doesnt appear to currently be 
+                drone.set_thrust(thrusts) #take action
+                new_state=self.discretize_state(drone) 
+                if new_state not in self.q_values:
+                    self.q_values[new_state]=np.zeros(len(self.actions))
+                    
+                
+                #self.q_values[state]=self.update_q_vals(drone)
+                if drone.has_reached_target_last_update: #only aiming for first target for now 
+                    break 
+                #break 
+            #break    
+        '''
+        break commands stop the thrusts from printing but doesnt stop q vals or simulation - suggests these on independant loops??
+        '''
+                #cumulative_reward += step_reward
+            #cumulative_rewards.append(cumulative_reward)
+        #print(cumulative_rewards)
+                
+                
+                
         '''
         Steps:  - Initialise drone - drone=Drone() or somthing to that effect
                 - take action

@@ -23,7 +23,7 @@ def is_saving() -> bool:
 SCREEN_WIDTH = 720
 SCREEN_HEIGHT = 480
 
-drone=Drone()
+drone=Drone() #i feel like the initialisation inside the loop should work fine but we have this instead for now
 def get_scale():
     return min(SCREEN_HEIGHT, SCREEN_WIDTH)
 

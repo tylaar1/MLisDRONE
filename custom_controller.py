@@ -4,6 +4,13 @@ from typing import Tuple
 import numpy as np
 import matplotlib.pyplot as plt
 
+'''current issues to fix - in the order i think is most important
+1. updating q value table - this currently updates the whole table for the given space not just the action, its the commented out line
+at the bottom of train
+2. need a few lines of code in get_thrusts to chose the action with the highest q value - should include random choice for tiebreaks
+3. actually impliment the q learning formula instead of returning one - no point doing this until q table updating properly
+4. get save + load functionality working
+'''
 class CustomController(FlightController):
 
     def __init__(self):
@@ -56,16 +63,12 @@ class CustomController(FlightController):
                 new_state=self.discretize_state(drone) 
                 if new_state not in self.q_values:
                     self.q_values[new_state]=np.zeros(len(self.actions))
-                    
-                
+                 
                 #self.q_values[state]=self.update_q_vals(drone)
                 if drone.has_reached_target_last_update: #only aiming for first target for now 
                     break 
-                #break 
-            #break    
-        '''
-        break commands stop the thrusts from printing but doesnt stop q vals or simulation - suggests these on independant loops??
-        '''
+              
+       
                 #cumulative_reward += step_reward
             #cumulative_rewards.append(cumulative_reward)
         #print(cumulative_rewards)

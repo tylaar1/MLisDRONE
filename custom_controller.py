@@ -101,11 +101,6 @@ class CustomController(FlightController):
             index=np.random.randint(len(self.actions))
             return self.actions[index],index #automatically return these values as index same shape as expected output
         else:
-            q_vals= self.q_values[state]
-            max_q_val = np.max(q_vals)
-            max_q_indices = np.flatnonzero(q_vals == max_q_val) #indexes of max q vals
-            index = np.random.choice(max_q_indices)  #for when 2 q vals have same max
-            return self.actions[index],index
             '''
             some logic to pick the max q value from table 
             '''

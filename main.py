@@ -25,7 +25,6 @@ def is_saving() -> bool:
 SCREEN_WIDTH = 720
 SCREEN_HEIGHT = 480
 
-drone=Drone() #i feel like the initialisation inside the loop should work fine but we have this instead for now
 def get_scale():
     return min(SCREEN_HEIGHT, SCREEN_WIDTH)
 
@@ -117,7 +116,7 @@ def draw_drone(screen: pygame.Surface, drone: Drone, drone_img: pygame.Surface):
 
 if __name__ == "__main__":
     drone=Drone()
-    controller = generate_controller()  # generate_controller() returns CustomController()
+    controller = generate_controller()
     if is_training():
         controller.train()  # No error here, as 'self' refers to the instance
         if is_saving():
@@ -125,4 +124,5 @@ if __name__ == "__main__":
     else:
         controller.load()
     
-    main(controller)
+    #main(controller) 
+    ''' this runs simulation after training - dont need for now but uncomment to visualise'''

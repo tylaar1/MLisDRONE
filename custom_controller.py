@@ -53,7 +53,7 @@ class CustomController(FlightController):
         return new_q
           
     def train(self,drone: Drone):
-        epochs = 1 #number of training loops
+        epochs = 2 #number of training loops
         cumulative_rewards=[]
         for i in range(epochs):
             actions=2 #max number action per loop 
@@ -64,11 +64,13 @@ class CustomController(FlightController):
                 print(thrusts)
                 print(index)
                 state=self.discretize_state(drone) 
-                reward = self.reward(drone)
-                cumulative_reward += reward
+                #reward = self.reward(drone)
+                #cumulative_reward += reward
                 print(thrusts) #doesnt appear to currently be 
                 drone.set_thrust(thrusts) #take action
                 new_state=self.discretize_state(drone) 
+                reward = self.reward(drone)
+                cumulative_reward += reward
                 print(f"Drone Position: ({drone.x}, {drone.y}), Velocity: ({drone.velocity_x}, {drone.velocity_y})")
 
                 if new_state not in self.q_values:

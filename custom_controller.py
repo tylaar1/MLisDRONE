@@ -3,10 +3,10 @@ from drone import Drone
 from typing import Tuple
 import numpy as np
 import matplotlib.pyplot as plt
-
+#1 complete
 '''current issues to fix - in the order i think is most important
 1. updating q value table - this currently updates the whole table for the given space not just the action, its the commented out line
-at the bottom of train
+at the bottom of train 
 2. need a few lines of code in get_thrusts to chose the action with the highest q value - should include random choice for tiebreaks
 3. actually impliment the q learning formula instead of returning one - no point doing this until q table updating properly
 4. get save + load functionality working

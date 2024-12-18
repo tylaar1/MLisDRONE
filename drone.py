@@ -45,7 +45,7 @@ class Drone():
         return (0,0) if len(self.target_coordinates)==0 else self.target_coordinates[0]
 
 
-    def step_simulation(self, delta_time: float):
+    def step_simulation(self, delta_time=0.01):
         # Set the target reached flag to false
         self.has_reached_target_last_update = False
         self.t += delta_time

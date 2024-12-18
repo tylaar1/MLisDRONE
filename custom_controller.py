@@ -18,6 +18,10 @@ class CustomController(FlightController):
         self.gamma=0.9
         self.epsilon=0.2
         #later should add epsilon decay for more exploration at start more exploitation at end
+        self.alpha = 0.1  
+        self.gamma = 0.9 
+        self.epsilon = 1.0  #initialise epsilon 
+
         self.actions = [ #as there are many options here we may get curse of dimensionality
             (round(thrust_left, 1), round(thrust_right, 1)) #round due to floating points
             for thrust_left in np.arange(0.0, 1.1, 0.1) #changing to 0.2 would quater curse dimensionality - experiment for when model working
@@ -102,6 +106,13 @@ class CustomController(FlightController):
             max_q_indices = np.flatnonzero(q_vals == max_q_val) #indexes of max q vals
             index = np.random.choice(max_q_indices)  #for when 2 q vals have same max
             return self.actions[index],index
+            '''
+            some logic to pick the max q value from table 
+            '''
+            left_thrust=0.55
+            right_thrust=0.5
+            index = 1 #placeholder value untill this code is completed
+        return (left_thrust, right_thrust),index # Replace this with your custom algorithm
     def load(self):
         pass
     def save(self):

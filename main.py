@@ -8,20 +8,22 @@ from flight_controller import FlightController
 
 #---------------------WRITE YOUR OWN CODE HERE------------------------#
 from heuristic_controller import HeuristicController
-from custom_controller import CustomController
+from Qlearning_controller import CustomController
 
 def generate_controller() -> FlightController:
-    # return HeuristicController() # <--- Replace this with your own written controller
-     return CustomController()
+    controller = CustomController()
+    if controller is None:
+        print("Model creation failed.")
 
 def is_training() -> bool:
-    return True # <--- Replace this with True if you want to train, false otherwise
+    return True # <--- Replace this with True if you want to train, false otherwise - this currently throws error not sure why
 def is_saving() -> bool:
     return False # <--- Replace this with True if you want to save the results of training, false otherwise
 
 #---------------------------------------------------------------------#
 SCREEN_WIDTH = 720
 SCREEN_HEIGHT = 480
+
 
 def get_scale():
     return min(SCREEN_HEIGHT, SCREEN_WIDTH)
@@ -116,9 +118,9 @@ if __name__ == "__main__":
     drone=Drone()
     controller = generate_controller()
     if is_training():
-        controller.train(drone)
+        controller.train()  # No error here, as 'self' refers to the instance
         if is_saving():
-            controller.save()        
+            controller.save()      
     else:
         controller.load()
     

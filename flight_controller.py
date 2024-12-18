@@ -44,6 +44,9 @@ class FlightController():
         drone.add_target_coordinate((-0.35, 0.4))
         drone.add_target_coordinate((0.5, -0.4))
         drone.add_target_coordinate((-0.35, 0))
+        '''example code for randomising targets'''
+        #for i in range(5):
+        #    drone.add_target_coordinate((np.randomrandint(-10,10)/10, np.randomrandint(-10,10)/10))
         return drone
 
     @classmethod

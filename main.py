@@ -69,6 +69,7 @@ def main(controller: FlightController):
 
         # --- Begin Physics --- #
         # Get the thrust information from the controller
+        #print(controller.get_thrusts(drone),'this one')
         drone.set_thrust(controller.get_thrusts(drone))
         # Update the simulation
         drone.step_simulation(delta_time)
@@ -122,5 +123,6 @@ if __name__ == "__main__":
     else:
         controller.load()
     
-    #main(controller) 
+    main(controller) 
+    
     ''' this runs simulation after training - dont need for now but uncomment to visualise'''

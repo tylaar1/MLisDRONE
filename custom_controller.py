@@ -3,10 +3,10 @@ from drone import Drone
 from typing import Tuple
 import numpy as np
 import matplotlib.pyplot as plt
-
+#1 complete
 '''current issues to fix - in the order i think is most important
 1. updating q value table - this currently updates the whole table for the given space not just the action, its the commented out line
-at the bottom of train
+at the bottom of train 
 2. need a few lines of code in get_thrusts to chose the action with the highest q value - should include random choice for tiebreaks
 3. actually impliment the q learning formula instead of returning one - no point doing this until q table updating properly
 4. get save + load functionality working
@@ -60,7 +60,9 @@ class CustomController(FlightController):
             drone=Drone()
             cumulative_reward=0
             for i in range(actions):
-                thrusts = self.get_thrusts(drone) #want as percentage
+                thrusts,index = self.get_thrusts(drone) #want as percentage
+                print(thrusts)
+                print(index)
                 state=self.discretize_state(drone) #could return from get thrusts but then have to modify drone.py which i am reluctant to do
                 print(thrusts) #doesnt appear to currently be 
                 drone.set_thrust(thrusts) #take action
@@ -68,7 +70,7 @@ class CustomController(FlightController):
                 if new_state not in self.q_values:
                     self.q_values[new_state]=np.zeros(len(self.actions))
                  
-                #self.q_values[state]=self.update_q_vals(drone)
+                self.q_values[state][index]=self.update_q_vals(drone) 
                 if drone.has_reached_target_last_update: #only aiming for first target for now 
                     break 
               
@@ -96,19 +98,16 @@ class CustomController(FlightController):
             self.q_values[state]=np.zeros(len(self.actions))#one q value per action
         print(self.q_values) #we know this succesfully initiallises - just need way of acc updating q vals 
         if np.random.rand() < self.epsilon: #epsilon greedy movement strategy - happy this works as expected
-            return self.actions[np.random.randint(len(self.actions))] #automatically return these values as index same shape as expected output
+            index=np.random.randint(len(self.actions))
+            return self.actions[index],index #automatically return these values as index same shape as expected output
         else:
             '''
             some logic to pick the max q value from table 
             '''
             left_thrust=0.55
             right_thrust=0.5
-        return (left_thrust, right_thrust) # Replace this with your custom algorithm
-    
-        thrustleft = 0.5
-        thrustright = 0.5
-        return (thrustleft, thrustright) # Replace this with your custom algorithm
-
+            index = 1 #placeholder value untill this code is completed
+        return (left_thrust, right_thrust),index # Replace this with your custom algorithm
     def load(self):
         pass
     def save(self):

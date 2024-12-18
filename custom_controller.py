@@ -4,20 +4,25 @@ from typing import Tuple
 import numpy as np
 import matplotlib.pyplot as plt
 
+'''current issues to fix - in the order i think is most important
+1. updating q value table - this currently updates the whole table for the given space not just the action, its the commented out line
+at the bottom of train
+2. need a few lines of code in get_thrusts to chose the action with the highest q value - should include random choice for tiebreaks
+3. actually impliment the q learning formula instead of returning one - no point doing this until q table updating properly
+4. get save + load functionality working
+'''
+
 class CustomController(FlightController):
 
     def __init__(self):
-# <<<<<<< Updated upstream
         self.alpha=0.1 #later these should have ways of varying these parameters to compare results
         self.gamma=0.9
         self.epsilon=0.2
         #later should add epsilon decay for more exploration at start more exploitation at end
-# =======
         self.alpha = 0.1  
         self.gamma = 0.9 
         self.epsilon = 1.0  #initialise epsilon 
 
-# >>>>>>> Stashed changes
         self.actions = [ #as there are many options here we may get curse of dimensionality
             (round(thrust_left, 1), round(thrust_right, 1)) #round due to floating points
             for thrust_left in np.arange(0.0, 1.1, 0.1) #changing to 0.2 would quater curse dimensionality - experiment for when model working
@@ -91,7 +96,6 @@ class CustomController(FlightController):
         '''
         pass    
     def get_thrusts(self, drone: Drone) -> Tuple[float, float]:
-# <<<<<<< Updated upstream
         state=self.discretize_state(drone)
         if state not in self.q_values:
             self.q_values[state]=np.zeros(len(self.actions))#one q value per action
@@ -105,11 +109,11 @@ class CustomController(FlightController):
             left_thrust=0.55
             right_thrust=0.5
         return (left_thrust, right_thrust) # Replace this with your custom algorithm
-# =======
+    
         thrustleft = 0.5
         thrustright = 0.5
         return (thrustleft, thrustright) # Replace this with your custom algorithm
-# >>>>>>> Stashed changes
+
     def load(self):
         pass
     def save(self):

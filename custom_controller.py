@@ -11,6 +11,7 @@ at the bottom of train
 3. actually impliment the q learning formula instead of returning one - no point doing this until q table updating properly
 4. get save + load functionality working
 '''
+#test for ben to check syncing
 class CustomController(FlightController):
 
     def __init__(self):

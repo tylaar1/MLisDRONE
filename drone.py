@@ -6,8 +6,8 @@ class Drone():
 
 
     def __init__(self):
-        self.x = 0
-        self.y = 0
+        self.x = -0.2
+        self.y = -0.2
         self.t = 0
         self.thrust_left = 0.5
         self.thrust_right = 0.5

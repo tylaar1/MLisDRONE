@@ -3,13 +3,19 @@ from drone import Drone
 from typing import Tuple
 import numpy as np
 import matplotlib.pyplot as plt
-#1 complete, 2 complete
-'''current issues to fix - in the order i think is most important
-1. updating q value table - this currently updates the whole table for the given space not just the action, its the commented out line
-at the bottom of train 
-2. need a few lines of code in get_thrusts to chose the action with the highest q value - should include random choice for tiebreaks
-3. actually impliment the q learning formula instead of returning one - no point doing this until q table updating properly
-4. get save + load functionality working
+import os
+
+'''to do list 
+1. drone not leaving inital state space. q learning is happening based off table but can see from
+cumulative reward array that it is unchanged meaning drone not leaving initial discrretized state
+could be discreetize state set up wrong although when you run the visual version can see it is in fact 
+changing but here it is always in state 2 so this likely implies something is wrong with the logic to 
+make the drone move - not too sure what unfortunately. Also when main is uncommented it ignores the train 
+logic for how many loops to run and instead uses lines 58-60 in main.py which reference functions in flight
+controler.py. I dont know if this is an issue or not but worth being aware of
+2. expand state and see if can find all four targets - this is basic model now fully complete
+3. experiment with adding in epsilon decay and best parameters (i.e loop to try alpha =0.01, 0.05, 0.1 etc)
+4. look at extensions on readme
 '''
 #test for ben to check syncing
 class CustomController(FlightController):
@@ -26,7 +32,7 @@ class CustomController(FlightController):
         ]
         #print(len(self.actions))
         self.q_values={}
-        self.state_size=64
+        self.state_size=256
     def discretize_state(self, drone:Drone):
         x_target,y_target=drone.get_next_target()
         distance=np.sqrt((drone.x-x_target)**2+(drone.y-y_target)**2)
@@ -43,43 +49,42 @@ class CustomController(FlightController):
             return 100
         else:
             return - self.discretize_state(drone) #this only works for now as states categorised by distance only, will need updating when discretize state updated
-        
-    def update_q_vals(self,drone: Drone):
-        '''
-        q vals update formula
-        '''
-        return 1 #check that code works up to here should see ones in dictionary corresponding to correct action and state  
+    def update_q_vals(self, drone: Drone, state, index,reward, new_state):
+        max_q_new_state = np.max(self.q_values[new_state])
+        q_current =1 + self.q_values[state][index]
+        new_q = q_current + self.alpha * (reward + self.gamma * max_q_new_state - q_current)
+        print('new_q:',new_q)
+        return new_q
+          
     def train(self,drone: Drone):
-        epochs = 10 #number of training loops
+        epochs = 1 #number of training loops
         cumulative_rewards=[]
         for i in range(epochs):
-            actions=10 #max number action per loop (will add logic to stop loop once drone reaches target)
+            actions=1 #max number action per loop (will add logic to stop loop once drone reaches target)
             drone=Drone()
             cumulative_reward=0
             for i in range(actions):
-                thrusts = self.get_thrusts(drone) #want as percentage
+                thrusts = self.get_thrusts(drone) 
                 index = thrusts[1]
                 print(thrusts)
                 print(index)
-                state=self.discretize_state(drone) #could return from get thrusts but then have to modify drone.py which i am reluctant to do
+                state=self.discretize_state(drone) 
+                reward = self.reward(drone)
+                cumulative_reward += reward
                 print(thrusts) #doesnt appear to currently be 
                 drone.set_thrust(thrusts) #take action
                 new_state=self.discretize_state(drone) 
                 if new_state not in self.q_values:
                     self.q_values[new_state]=np.zeros(len(self.actions))
-                 
-                self.q_values[state][index]=self.update_q_vals(drone) 
+                self.q_values[new_state][index]=self.update_q_vals(drone, state, index, reward, new_state)
+                cumulative_reward += reward
+                
                 if drone.has_reached_target_last_update: #only aiming for first target for now 
+                    cumulative_rewards.append(cumulative_reward)   
                     break 
-              
-       
-                #cumulative_reward += step_reward
-            #cumulative_rewards.append(cumulative_reward)
-        #print(cumulative_rewards)
-                
-                
-                
-            
+            cumulative_rewards.append(cumulative_reward)  
+        print('cumulative reward array:',cumulative_rewards)
+         
     def get_thrusts(self, drone: Drone) -> Tuple[float, float]:
         state=self.discretize_state(drone)
         if state not in self.q_values:
@@ -94,7 +99,11 @@ class CustomController(FlightController):
             max_q_indices = np.flatnonzero(q_vals == max_q_val) #indexes of max q vals
             index = np.random.choice(max_q_indices)  #for when 2 q vals have same max
             return self.actions[index],index
-    def load(self):
-        pass
-    def save(self):
-        pass
+    def load(self,filename="q_values.npy"):
+        q_values_list = np.load(filename, allow_pickle=True)
+        self.q_values = {state: q_vals for state, q_vals in q_values_list}
+        print('Q-values loaded from', filename) 
+    def save(self,filename="q_values.npy"):
+        q_values_list = [(state, q_vals) for state, q_vals in self.q_values.items()]
+        np.save(filename, q_values_list,allow_pickle=True)
+        print('Q-values saved to', filename) 

@@ -36,13 +36,13 @@ class Drone():
     def set_thrust(self, thrust_percentage: Tuple[float, float]):
         #print(thrust_percentage)
         thrust_percentage,_=thrust_percentage
-        #print(thrust_percentage)
+        print('thrust%:',thrust_percentage)
         assert(len(thrust_percentage) == 2)
         assert(0<=thrust_percentage[0]<=1)
         assert(0<=thrust_percentage[1]<=1)
         self.thrust_left = thrust_percentage[0] * self.max_thrust
         self.thrust_right = thrust_percentage[1] * self.max_thrust
-        #thrust percentage is joined together again
+        
 
     
     def get_next_target(self) -> Tuple[float, float]:

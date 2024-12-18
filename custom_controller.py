@@ -6,13 +6,9 @@ import matplotlib.pyplot as plt
 import os
 
 '''to do list 
-1. drone not leaving inital state space. q learning is happening based off table but can see from
-cumulative reward array that it is unchanged meaning drone not leaving initial discrretized state
-could be discreetize state set up wrong although when you run the visual version can see it is in fact 
-changing but here it is always in state 2 so this likely implies something is wrong with the logic to 
-make the drone move - not too sure what unfortunately. Also when main is uncommented it ignores the train 
-logic for how many loops to run and instead uses lines 58-60 in main.py which reference functions in flight
-controler.py. I dont know if this is an issue or not but worth being aware of
+1. drone not leaving inital state space. Using print statements can see thrusts are being passed to drone.set_thrusts
+so not too sure why this isnt working - print velocity shows it doesnt move - maybe implying thrusts hardcoded 0.5,0.5
+somewhere? or maybe thrusts not updating velocity properly?
 2. expand state and see if can find all four targets - this is basic model now fully complete
 3. experiment with adding in epsilon decay and best parameters (i.e loop to try alpha =0.01, 0.05, 0.1 etc)
 4. look at extensions on readme
@@ -51,7 +47,7 @@ class CustomController(FlightController):
             return - self.discretize_state(drone) #this only works for now as states categorised by distance only, will need updating when discretize state updated
     def update_q_vals(self, drone: Drone, state, index,reward, new_state):
         max_q_new_state = np.max(self.q_values[new_state])
-        q_current =1 + self.q_values[state][index]
+        q_current =self.q_values[state][index]
         new_q = q_current + self.alpha * (reward + self.gamma * max_q_new_state - q_current)
         print('new_q:',new_q)
         return new_q
@@ -60,8 +56,7 @@ class CustomController(FlightController):
         epochs = 1 #number of training loops
         cumulative_rewards=[]
         for i in range(epochs):
-            actions=1 #max number action per loop (will add logic to stop loop once drone reaches target)
-            drone=Drone()
+            actions=2 #max number action per loop 
             cumulative_reward=0
             for i in range(actions):
                 thrusts = self.get_thrusts(drone) 
@@ -74,6 +69,8 @@ class CustomController(FlightController):
                 print(thrusts) #doesnt appear to currently be 
                 drone.set_thrust(thrusts) #take action
                 new_state=self.discretize_state(drone) 
+                print(f"Drone Position: ({drone.x}, {drone.y}), Velocity: ({drone.velocity_x}, {drone.velocity_y})")
+
                 if new_state not in self.q_values:
                     self.q_values[new_state]=np.zeros(len(self.actions))
                 self.q_values[new_state][index]=self.update_q_vals(drone, state, index, reward, new_state)

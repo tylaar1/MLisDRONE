@@ -71,6 +71,7 @@ def main(controller: FlightController):
 
         # --- Begin Physics --- #
         # Get the thrust information from the controller
+        #print(controller.get_thrusts(drone),'this one')
         drone.set_thrust(controller.get_thrusts(drone))
         # Update the simulation
         drone.step_simulation(delta_time)

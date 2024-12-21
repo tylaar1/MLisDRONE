@@ -6,8 +6,8 @@ class Drone():
 
 
     def __init__(self):
-        self.x = 0
-        self.y = 0
+        self.x = -0.2
+        self.y = -0.2
         self.t = 0
         self.thrust_left = 0.5
         self.thrust_right = 0.5
@@ -34,11 +34,15 @@ class Drone():
         return self.pitch
 
     def set_thrust(self, thrust_percentage: Tuple[float, float]):
+        #print(thrust_percentage)
+        thrust_percentage,_=thrust_percentage
+        print('thrust%:',thrust_percentage)
         assert(len(thrust_percentage) == 2)
         assert(0<=thrust_percentage[0]<=1)
         assert(0<=thrust_percentage[1]<=1)
         self.thrust_left = thrust_percentage[0] * self.max_thrust
         self.thrust_right = thrust_percentage[1] * self.max_thrust
+        
 
     
     def get_next_target(self) -> Tuple[float, float]:

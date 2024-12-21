@@ -15,13 +15,13 @@ class FlightController():
     @classmethod
     def get_thrusts(self, drone: Drone) -> Tuple[float, float]:
         """Takes a given drone object, containing information about its current state
-        and calculates a pair of thrust values for the left and right propellers.
+        #and calculates a pair of thrust values for the left and right propellers.
 
-        Args:
-            drone (Drone): The drone object containing the information about the drones state.
+        #Args:
+        #    drone (Drone): The drone object containing the information about the drones state.
 
-        Returns:
-            Tuple[float, float]: A pair of floating point values which respectively represent the thrust of the left and right propellers, must be between 0 and 1 inclusive.
+        #Returns:
+        #    Tuple[float, float]: A pair of floating point values which respectively represent the thrust of the left and right propellers, must be between 0 and 1 inclusive.
         """
 
 

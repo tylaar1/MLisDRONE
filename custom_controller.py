@@ -35,7 +35,11 @@ class CustomController(FlightController):
         self.state_size=256
     def discretize_state(self, drone:Drone):
         x_target,y_target=drone.get_next_target()
+<<<<<<< Updated upstream
         distance=np.sqrt((drone.x-x_target)**2+(drone.y-y_target)**2) # BEN: DISTANCE FROM DRONE TO TARGET
+=======
+        distance=np.sqrt((drone.x-x_target)**2+(drone.y-y_target)**2) # TAKE2 BEN: DISTANCE TO DRONE
+>>>>>>> Stashed changes
         '''
         this will learn to perform the same action every time the distance away is the same 
         regardless of specific x,y coords and other stuff like velocity and pitch

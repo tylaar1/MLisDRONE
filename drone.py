@@ -36,7 +36,7 @@ class Drone():
     def set_thrust(self, thrust_percentage: Tuple[float, float]):
         #print(thrust_percentage)
         thrust_percentage,_=thrust_percentage
-        print('thrust%:',thrust_percentage)
+        #print('thrust%:',thrust_percentage)
         assert(len(thrust_percentage) == 2)
         assert(0<=thrust_percentage[0]<=1)
         assert(0<=thrust_percentage[1]<=1)
@@ -53,7 +53,7 @@ class Drone():
         # Set the target reached flag to false
         self.has_reached_target_last_update = False
         self.t += delta_time
-        print('self.t:',self.t,'vx:',self.velocity_x,'thrust_left:',self.thrust_left)
+        #print('self.t:',self.t,'vx:',self.velocity_x,'thrust_left:',self.thrust_left)
         thrust_vec_x = np.sin(self.pitch)
         thrust_vec_y = np.cos(self.pitch)
         velocity_size = np.sqrt(self.velocity_x*self.velocity_x+self.velocity_y*self.velocity_y)

@@ -6,12 +6,8 @@ import matplotlib.pyplot as plt
 import os
 
 '''to do list 
-1. simulation and q value fixes - training seems slow although is happening need to experiment with ways of speeding 
-up process, start position 0 has state of 0 although target at 0.35, 0.3 - 0.3*0.35 =approx 0.1 so state should be 0.1*10=1 shld check
-this logic - can also run longer loops commenting out unnececary print statements to save compute. check algorthms behaving as expected,
-try reducing state sizes. Can try other less direct reward functions such as hit target =1 dont =0, can try using heuristics (altho 
-potentially this is an extension more than a fix), also running sim might be using epsilon greedy still when should just be using best
-route
+1. make it so epsilon greedy policy exists in training loop rather than get thrusts + figure out why drone.reached target since 
+last update works in main but not training loop (potentially to do with editing shape of data to include index)
 2. we overwrite the same q values every time need system to store different saves based on input parameters eg alpha values for 
 comparison in report
 3. expand state and see if can find all four targets - this is basic model now fully complete
@@ -28,8 +24,8 @@ class CustomController(FlightController):
 
         self.actions = [ #as there are many options here we may get curse of dimensionality
             (round(thrust_left, 1), round(thrust_right, 1)) #round due to floating points
-            for thrust_left in np.arange(0, 1.1, 0.1) #changing to 0.2 would quater curse dimensionality - experiment for when model working
-            for thrust_right in np.arange(0, 1.1, 0.1)
+            for thrust_left in np.arange(0, 1.1, 0.2) #changing to 0.2 would quater curse dimensionality - experiment for when model working
+            for thrust_right in np.arange(0, 1.1, 0.2)
         ]
         #print(len(self.actions))
         self.q_values={}
@@ -47,10 +43,12 @@ class CustomController(FlightController):
     #room to expand state to include velocity,pitch
     def reward(self,drone: Drone):
         distance = self.discretize_state(drone) #this only works for now as states categorised by distance only, will need updating when discretize state updated
-        if drone.has_reached_target_last_update: #this is obviously something to be played with
-            return 100
+        #if drone.has_reached_target_last_update: #this is obviously something to be played with
+        #    return 100
+        if distance == 0:
+            return 100 #drone.has_reached_target_last_update doesnt seem to give any rewards
         else:
-            return 10/(distance+1) #experimenting with positive reward +1 to avoid divide by 0 error at target
+            return -distance #experimenting with positive reward +1 to avoid divide by 0 error at target
     def update_q_vals(self, drone: Drone, state, index,reward, new_state):
         max_q_new_state = np.max(self.q_values[new_state])
         q_current =self.q_values[state][index]
@@ -62,7 +60,7 @@ class CustomController(FlightController):
         epochs = 10 #number of training loops
         cumulative_rewards=[]
         for i in range(epochs):
-            actions=1000#max number action per loop 
+            actions=100000#max number action per loop 
             cumulative_reward=0
             for i in range(actions):
                 thrusts = self.get_thrusts(drone) 
@@ -74,7 +72,7 @@ class CustomController(FlightController):
                 #cumulative_reward += reward
                 #print(thrusts) #doesnt appear to currently be 
                 drone.set_thrust(thrusts) #take action
-                drone.step_simulation(delta_time=0.1)
+                drone.step_simulation(delta_time=0.01)
                 new_state=self.discretize_state(drone) 
                 reward = self.reward(drone)
                 cumulative_reward += reward
@@ -85,19 +83,18 @@ class CustomController(FlightController):
                 self.q_values[new_state][index]=self.update_q_vals(drone, state, index, reward, new_state)
                 cumulative_reward += reward
                 
-                if drone.has_reached_target_last_update: #only aiming for first target for now 
-                    cumulative_rewards.append(cumulative_reward)   
-                    break 
+                #if drone.has_reached_target_last_update: #only aiming for first target for now 
+                 #   cumulative_rewards.append(cumulative_reward)   
+                  #  break 
             cumulative_rewards.append(cumulative_reward)
-            print(self.q_values) 
+            #print(self.q_values) 
         print(self.q_values)  
         print('cumulative reward array:',cumulative_rewards)
          
     def get_thrusts(self, drone: Drone) -> Tuple[float, float]:
         state=self.discretize_state(drone)
         if state not in self.q_values:
-            self.q_values[state]=np.zeros(len(self.actions))#one q value per action
-        #print(self.q_values) #we know this succesfully initiallises - just need way of acc updating q vals 
+            self.q_values[state]=np.zeros(len(self.actions))#one q value per action 
         if np.random.rand() < self.epsilon: #epsilon greedy movement strategy - happy this works as expected
             index=np.random.randint(len(self.actions))
             return self.actions[index],index #automatically return these values as index same shape as expected output

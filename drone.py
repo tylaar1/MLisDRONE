@@ -68,7 +68,7 @@ class Drone():
         vel_x_h = self.velocity_x + acc_x_h * delta_time/2
         vel_y_h = self.velocity_y + acc_y_h * delta_time/2
         theta_vel_h = self.pitch_velocity + theta_acc_h * delta_time / 2
-
+        #print(self.pitch) also tends to inf
         x_h = self.x + vel_x_h * delta_time / 2
         y_h = self.y + vel_y_h * delta_time / 2
         theta_h = self.pitch + theta_vel_h * delta_time / 2
@@ -80,11 +80,15 @@ class Drone():
         acc_y_f = (total_thrust * thrust_vec_y) / self.mass + self.g - self.velocity_drag * self.velocity_y
         acc_x_f = (total_thrust * thrust_vec_x) / self.mass - self.velocity_drag * self.velocity_x
         theta_acc_f = (total_torque) / self.mass - self.pitch_drag_constant * np.abs(self.pitch_velocity)
-
+        #print(theta_vel_h,theta_acc_f) these both also tend to infinity
         self.velocity_x = vel_x_h + acc_x_f * delta_time/2
         self.velocity_y = vel_y_h + acc_y_f * delta_time/2
         self.pitch_velocity = theta_vel_h + theta_acc_f * delta_time / 2
-
+        max_velocity = 100  #hardcoded max velocity to stop it from permanently increasing - it just sticks at 100 instead now
+        self.velocity_x = np.clip(self.velocity_x, -max_velocity, max_velocity)
+        self.velocity_y = np.clip(self.velocity_y, -max_velocity, max_velocity)
+        self.pitch_velocity = np.clip(self.pitch_velocity, -max_velocity, max_velocity)
+        #print(self.pitch_velocity,delta_time) #pitch velocity keeps increasing tends to inf as number simulations tennds to inf
         self.x = x_h + self.velocity_x * delta_time / 2
         self.y = y_h + self.velocity_y * delta_time / 2
         self.pitch = theta_h + self.pitch_velocity * delta_time / 2
@@ -96,6 +100,7 @@ class Drone():
         distance_to_target = np.sqrt(distance_x*distance_x+distance_y*distance_y)
         if distance_to_target < self.game_target_size:
             if len(self.target_coordinates) > 0:
+                print('target reached') #this never happens in train loop - very hard to have good reward func if target never hit in first place
                 self.target_coordinates.pop(0)
                 self.has_reached_target_last_update = True
 

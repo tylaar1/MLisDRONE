@@ -14,7 +14,7 @@ from MrChatGPTcustom_controller import MrChatGPTCustomController
 def generate_controller() -> FlightController:
     # return HeuristicController() # <--- Replace this with your own written controller
     #  return CustomController()
-    return MrChatGPTCustomController()
+    return CustomController()
 
 def is_training() -> bool:
     return True # <--- Replace this with True if you want to train, false otherwise
@@ -119,11 +119,11 @@ if __name__ == "__main__":
     drone=Drone()
     controller = generate_controller()
     if is_training():
-        controller.train()  # No error here, as 'self' refers to the instance
+        controller.train(drone)  # No error here, as 'self' refers to the instance
         if is_saving():
             controller.save()      
     else:
         controller.load()
-    
-    #main(controller) 
+        print('succesfully loaded file')
+    main(controller) 
     ''' this runs simulation after training - dont need for now but uncomment to visualise'''

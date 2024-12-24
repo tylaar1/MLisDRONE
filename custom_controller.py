@@ -6,14 +6,18 @@ import matplotlib.pyplot as plt
 import os
 
 '''to do list 
-1. drone not leaving inital state space. Using print statements can see thrusts are being passed to drone.set_thrusts
-so not too sure why this isnt working - print velocity shows it doesnt move - maybe implying thrusts hardcoded 0.5,0.5
-somewhere? or maybe thrusts not updating velocity properly?
-2. expand state and see if can find all four targets - this is basic model now fully complete
-3. experiment with adding in epsilon decay and best parameters (i.e loop to try alpha =0.01, 0.05, 0.1 etc)
-4. look at extensions on readme
+1. simulation and q value fixes - training seems slow although is happening need to experiment with ways of speeding 
+up process, start position 0 has state of 0 although target at 0.35, 0.3 - 0.3*0.35 =approx 0.1 so state should be 0.1*10=1 shld check
+this logic - can also run longer loops commenting out unnececary print statements to save compute. check algorthms behaving as expected,
+try reducing state sizes. Can try other less direct reward functions such as hit target =1 dont =0, can try using heuristics (altho 
+potentially this is an extension more than a fix), also running sim might be using epsilon greedy still when should just be using best
+route
+2. we overwrite the same q values every time need system to store different saves based on input parameters eg alpha values for 
+comparison in report
+3. expand state and see if can find all four targets - this is basic model now fully complete
+4. experiment with adding in epsilon decay and best parameters (i.e loop to try alpha =0.01, 0.05, 0.1 etc)
+5. look at extensions on readme
 '''
-#test for ben to check syncing
 class CustomController(FlightController):
 
     def __init__(self):
@@ -21,9 +25,6 @@ class CustomController(FlightController):
         self.gamma=0.9
         self.epsilon=0.2
         #later should add epsilon decay for more exploration at start more exploitation at end
-        self.alpha = 0.1  
-        self.gamma = 0.9 
-        self.epsilon = 1.0  #initialise epsilon 
 
         self.actions = [ #as there are many options here we may get curse of dimensionality
             (round(thrust_left, 1), round(thrust_right, 1)) #round due to floating points
@@ -32,7 +33,7 @@ class CustomController(FlightController):
         ]
         #print(len(self.actions))
         self.q_values={}
-        self.state_size=256
+        self.state_size=64
     def discretize_state(self, drone:Drone):
         x_target,y_target=drone.get_next_target()
         distance=np.sqrt((drone.x-x_target)**2+(drone.y-y_target)**2) # BEN: DISTANCE FROM DRONE TO TARGET
@@ -57,10 +58,10 @@ class CustomController(FlightController):
         return new_q
           
     def train(self,drone: Drone):
-        epochs = 2 #number of training loops
+        epochs = 10 #number of training loops
         cumulative_rewards=[]
         for i in range(epochs):
-            actions=2 #max number action per loop 
+            actions=100 #max number action per loop 
             cumulative_reward=0
             for i in range(actions):
                 thrusts = self.get_thrusts(drone) 
@@ -72,6 +73,7 @@ class CustomController(FlightController):
                 #cumulative_reward += reward
                 print(thrusts) #doesnt appear to currently be 
                 drone.set_thrust(thrusts) #take action
+                drone.step_simulation(delta_time=0.1)
                 new_state=self.discretize_state(drone) 
                 reward = self.reward(drone)
                 cumulative_reward += reward

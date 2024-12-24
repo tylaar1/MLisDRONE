@@ -6,8 +6,8 @@ class Drone():
 
 
     def __init__(self):
-        self.x = -0.2
-        self.y = -0.2
+        self.x = 0
+        self.y = 0
         self.t = 0
         self.thrust_left = 0.5
         self.thrust_right = 0.5
@@ -53,7 +53,7 @@ class Drone():
         # Set the target reached flag to false
         self.has_reached_target_last_update = False
         self.t += delta_time
-
+        print('self.t:',self.t,'vx:',self.velocity_x,'thrust_left:',self.thrust_left)
         thrust_vec_x = np.sin(self.pitch)
         thrust_vec_y = np.cos(self.pitch)
         velocity_size = np.sqrt(self.velocity_x*self.velocity_x+self.velocity_y*self.velocity_y)

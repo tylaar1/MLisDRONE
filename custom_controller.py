@@ -25,10 +25,10 @@ if EPSILON > MINIMUM_EPSILON and LAST_REWARD >= REWARD_THRESHOLD:
 class CustomController(FlightController):
 
     def __init__(self):
-        self.alpha=0.1 #later these should have ways of varying these parameters to compare results
-        self.gamma=0.9
+        self.alpha=0.01 #later these should have ways of varying these parameters to compare results
+        self.gamma=0.99
         self.epsilon=1
-        self.epsilon_decay=0.001
+        self.epsilon_decay=0.01
         self.epsilon_min=0.1
         #later should add epsilon decay for more exploration at start more exploitation at end
 
@@ -56,9 +56,9 @@ class CustomController(FlightController):
         if drone.has_reached_target_last_update: 
             return 100
         if distance > 9: #if drone goes too far from target enforce large punishment
-            return -100   
+            return -50  
         else:
-            return 5-distance #reward for getting closer punishes for getting further away
+            return 10-distance #reward for getting closer punishes for getting further away
     def update_q_vals(self, drone: Drone, state, index,reward, new_state):
         max_q_new_state = np.max(self.q_values[new_state])
         q_current =self.q_values[state][index]
@@ -67,7 +67,7 @@ class CustomController(FlightController):
         return new_q
           
     def train(self,drone: Drone):
-        epochs = 100000 #number of training loops
+        epochs = 1000 #number of training loops
         cumulative_rewards=[] 
         for i in range(epochs): 
             drone = self.init_drone() #reset the drone
@@ -91,7 +91,7 @@ class CustomController(FlightController):
                 #print(f"Drone Position: ({drone.x}, {drone.y}), Velocity: ({drone.velocity_x}, {drone.velocity_y})")
 
                 if new_state not in self.q_values:
-                    self.q_values[new_state]=np.zeros(len(self.actions))
+                    self.q_values[new_state]=np.full(len(self.actions), 1.0)
                 self.q_values[new_state][index]=self.update_q_vals(drone, state, index, reward, new_state)
                 cumulative_reward += reward
                 
@@ -110,11 +110,12 @@ class CustomController(FlightController):
     def get_thrusts(self, drone: Drone,training=False) -> Tuple[float, float]:
         state=self.discretize_state(drone)
         if state not in self.q_values:
-            self.q_values[state]=np.zeros(len(self.actions))#one q value per action 
+            self.q_values[state]=np.full(len(self.actions), 1.0)#small initial value to encourage exploration
         if training:
             if np.random.rand() < self.epsilon: #epsilon greedy movement strategy - happy this works as expected
                 index=np.random.randint(len(self.actions))
-                self.epsilon=max(self.epsilon-self.epsilon_decay,self.epsilon_min) #currently only decreasing after a random action taken but can modify so that its after any action
+                self.epsilon *= (1 - self.epsilon_decay)
+                self.epsilon=max(self.epsilon,self.epsilon_min) #currently only decreasing after a random action taken but can modify so that its after any action
                 return self.actions[index],index #automatically return these values as index same shape as expected output
             else:
                 q_vals= self.q_values[state]

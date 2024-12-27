@@ -5,28 +5,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
-'''to do list 
-1. figure out why drone.reached target since last update works in main but not training loop (potentially to do with editing
-shape of data to include index)
-2. we overwrite the same q values every time need system to store different saves based on input parameters eg alpha values for 
-comparison in report
-3. expand state and see if can find all four targets - this is basic model now fully complete
-4. experiment with best parameters (i.e loop to try alpha =0.01, 0.05, 0.1 etc)
-5. look at extensions on readme
-'''
 
-'''
-pseudocode i found on git hub for reward based epsilon decay that could be implimented later - wont necessaraly improve model but 
-good experiment
-if EPSILON > MINIMUM_EPSILON and LAST_REWARD >= REWARD_THRESHOLD:    
-    EPSILON = DECAY_EPSILON(EPSILON)    
-    REWARD_THRESHOLD = INCREMENT_REWARD(REWARD_THRESHOLD)
-'''
 class CustomController(FlightController):
 
     def __init__(self):
-        self.alpha=0.01 #later these should have ways of varying these parameters to compare results
-        self.gamma=0.99
+        self.alpha=0.1 #later these should have ways of varying these parameters to compare results
+        self.gamma=0.9
         self.epsilon=1
         self.epsilon_decay=0.01
         self.epsilon_min=0.1
@@ -59,48 +43,47 @@ class CustomController(FlightController):
             return -50  
         else:
             return 10-distance #reward for getting closer punishes for getting further away
-    def update_q_vals(self, drone: Drone, state, index,reward, new_state):
-        max_q_new_state = np.max(self.q_values[new_state])
-        q_current =self.q_values[state][index]
-        new_q = q_current + self.alpha * (reward + self.gamma * max_q_new_state - q_current)
-        #print('new_q:',new_q)
-        return new_q
+    def update_q_vals(self,episode):
+        G = 0
+        visited = set() #set unordered
+        for state, index, reward in reversed(episode): #reverse as we are working backwards
+            G = reward + self.gamma * G  #g continually updated according to MC formula
+            if (state, index) not in visited: #state-action pair only visited once per episode 
+                visited.add((state, index))  
+                if state not in self.q_values: 
+                    self.q_values[state] = np.full(len(self.actions), 0.1) #small initial value
+                self.q_values[state][index] += self.alpha * (G - self.q_values[state][index])
           
     def train(self,drone: Drone):
-        epochs = 1000 #number of training loops
+        epochs = 10000 #number of training loops
         cumulative_rewards=[] 
         for i in range(epochs): 
             drone = self.init_drone() #reset the drone
             actions=self.get_max_simulation_steps() #actions and delta time are set to equal what they are in pygame simulation
-            delta_time= 10*self.get_time_interval()  
+            delta_time= 10*self.get_time_interval() #it is rare to actually leave a state in a given step so check every 10 steps
+            episode=[]
             cumulative_reward=0 
             for i in range(actions):
                 state=self.discretize_state(drone)
                 thrusts = self.get_thrusts(drone,training=True) 
                 index = thrusts[1] 
-                 
-                #reward = self.reward(drone)
-                #cumulative_reward += reward
-                #print(thrusts) #doesnt appear to currently be 
+                  
                 drone.set_thrust(thrusts) #take action
                 drone.step_simulation(delta_time=delta_time) #update drone state
-                new_state=self.discretize_state(drone) 
+               
                 reward = self.reward(drone)
                 cumulative_reward += reward
-                #print(f"Drone Position: ({drone.x}, {drone.y}), Velocity: ({drone.velocity_x}, {drone.velocity_y})")
-
-                if new_state not in self.q_values:
-                    self.q_values[new_state]=np.full(len(self.actions), 1.0)
-                self.q_values[new_state][index]=self.update_q_vals(drone, state, index, reward, new_state)
-                cumulative_reward += reward
+                episode.append((state,index,reward)) #collect together for use in update_q_vals
+               
                 
-                if drone.has_reached_target_last_update:
-                    #print(f"Target reached at step {i}")
-                    cumulative_rewards.append(cumulative_reward)
-                    break
+                #if drone.has_reached_target_last_update:
+                 #   #print(f"Target reached at step {i}")
+                 #   cumulative_rewards.append(cumulative_reward)
+                 #   break
                 if self.distance(drone) > 10:
                     #print(f"Drone has gone too far from the target at step {i}")
                     break
+            self.update_q_vals(episode)
             cumulative_rewards.append(cumulative_reward)
             #print(self.q_values) 
         print(self.q_values)  

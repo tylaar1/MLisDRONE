@@ -55,7 +55,6 @@ def main(controller: FlightController):
     
     # Initalise the drone
     drone = controller.init_drone()
-    
     simulation_step_counter = 0
     max_simulation_steps = controller.get_max_simulation_steps()
     delta_time = controller.get_time_interval()
@@ -94,6 +93,7 @@ def main(controller: FlightController):
         simulation_step_counter+=1
         if (simulation_step_counter>max_simulation_steps):
             drone = controller.init_drone() # Reset the drone
+            drone.target_coordinates.pop(0) #to check if generalises to other targets - comment out for main simulation
             simulation_step_counter = 0
 
     

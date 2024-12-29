@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
+'''potential problem: drone doesnt get enough experience of unfamiliar paths to gneralise well to them, should put drone in a variety of situations to learn from'''
 
 class MCController(FlightController):
 
@@ -27,7 +28,7 @@ class MCController(FlightController):
         x_target,y_target=drone.get_next_target()
         x_dist=drone.x-x_target #this should be acceptable regardless of which way around it is as learns same pattern
         y_dist=drone.y-y_target
-        state=np.array([int(x_dist*10),int(y_dist*10)]) #*10 means round to nearest .1 rather than 1, int works by truncating rather than traditional rounding
+        state=np.array([int(x_dist*10),int(y_dist*10),int(drone.velocity_x*10),int(drone.velocity_y*10)]) #*10 means round to nearest .1 rather than 1, int works by truncating rather than traditional rounding
         return tuple(np.clip(state, 1-self.state_size, self.state_size - 1)) #state can be no more than 9 away from target in either direction
     #room to expand state to include velocity,pitch
     def distance(self, drone: Drone): #distance from target
@@ -58,8 +59,9 @@ class MCController(FlightController):
         cumulative_rewards=[] 
         for i in range(epochs): 
             drone = self.init_drone() #reset the drone
-            actions=self.get_max_simulation_steps() #actions and delta time are set to equal what they are in pygame simulation
+            actions=10*self.get_max_simulation_steps() #actions and delta time are set to equal what they are in pygame simulation
             delta_time= 10*self.get_time_interval() #it is rare to actually leave a state in a given step so check every 10 steps
+            #times by 10 while experimenting with this
             episode=[]
             cumulative_reward=0 
             for i in range(actions):
@@ -77,6 +79,7 @@ class MCController(FlightController):
                 
                 if drone.has_reached_target_last_update: #this makes simulation stop after target reached, for all 4 targets comment this out.
                     #print(f"Target reached at step {i}")
+                    #print(drone.velocity_x,drone.velocity_y)
                     cumulative_rewards.append(cumulative_reward)
                     break
                 if self.distance(drone) > 10: #has already recieved large punishment for this to discourage behaviour

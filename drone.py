@@ -85,9 +85,9 @@ class Drone():
         self.velocity_y = vel_y_h + acc_y_f * delta_time/2
         self.pitch_velocity = theta_vel_h + theta_acc_f * delta_time / 2
         max_velocity = 100  #hardcoded max velocity to stop it from permanently increasing - it just sticks at 100 instead now
-        self.velocity_x = np.clip(self.velocity_x, -max_velocity, max_velocity)
-        self.velocity_y = np.clip(self.velocity_y, -max_velocity, max_velocity)
-        self.pitch_velocity = np.clip(self.pitch_velocity, -max_velocity, max_velocity)
+        #self.velocity_x = np.clip(self.velocity_x, -max_velocity, max_velocity)
+        #self.velocity_y = np.clip(self.velocity_y, -max_velocity, max_velocity)
+        #self.pitch_velocity = np.clip(self.pitch_velocity, -max_velocity, max_velocity)
         #print(self.pitch_velocity,delta_time) #pitch velocity keeps increasing tends to inf as number simulations tennds to inf
         self.x = x_h + self.velocity_x * delta_time / 2
         self.y = y_h + self.velocity_y * delta_time / 2

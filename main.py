@@ -8,13 +8,12 @@ from flight_controller import FlightController
 #
 #---------------------WRITE YOUR OWN CODE HERE------------------------#
 from heuristic_controller import HeuristicController
-#from custom_controller import CustomController
-from monte_carlo import CustomController
+from custom_controller import CustomController
+from monte_carlo import MCController
 
 def generate_controller() -> FlightController:
-    # return HeuristicController() # <--- Replace this with your own written controller
-    #  return CustomController()
-    return CustomController()
+    return MCController() 
+    #return CustomController()
 
 def is_training() -> bool:
     return True # <--- Replace this with True if you want to train, false otherwise

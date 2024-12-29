@@ -100,7 +100,7 @@ class Drone():
         distance_to_target = np.sqrt(distance_x*distance_x+distance_y*distance_y)
         if distance_to_target < self.game_target_size:
             if len(self.target_coordinates) > 0:
-                print('target reached') #this never happens in train loop - very hard to have good reward func if target never hit in first place
+                #print('target reached') 
                 self.target_coordinates.pop(0)
                 self.has_reached_target_last_update = True
 

@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import os
 
 
-class CustomController(FlightController):
+class MCController(FlightController):
 
     def __init__(self):
         self.alpha=0.1 #later these should have ways of varying these parameters to compare results
@@ -14,24 +14,23 @@ class CustomController(FlightController):
         self.epsilon=1
         self.epsilon_decay=0.01
         self.epsilon_min=0.1
-        #later should add epsilon decay for more exploration at start more exploitation at end
 
-        self.actions = [ #as there are many options here we may get curse of dimensionality
+        self.actions = [ 
             (round(thrust_left,2), round(thrust_right,2)) #round due to floating points
-            for thrust_left in np.arange(0, 1.25, 0.25) #changing to 0.2 would quater curse dimensionality - experiment for when model working
+            for thrust_left in np.arange(0, 1.25, 0.25) 
             for thrust_right in np.arange(0, 1.25, 0.25)
         ]
-        #print(len(self.actions))
         self.q_values={}
-        self.state_size=10
+        self.state_size=10 #maximum state space is 10 from target
+        '''should this be based around centre of screen or drone?'''
     def discretize_state(self, drone:Drone):
         x_target,y_target=drone.get_next_target()
         x_dist=drone.x-x_target #this should be acceptable regardless of which way around it is as learns same pattern
         y_dist=drone.y-y_target
         state=np.array([int(x_dist*10),int(y_dist*10)]) #*10 means round to nearest .1 rather than 1, int works by truncating rather than traditional rounding
-        return tuple(np.clip(state, 1-self.state_size, self.state_size - 1))#this doesnt acc confine to screen just means state cant be further than 1 screen away no control over dynamics
+        return tuple(np.clip(state, 1-self.state_size, self.state_size - 1)) #state can be no more than 9 away from target in either direction
     #room to expand state to include velocity,pitch
-    def distance(self, drone: Drone):
+    def distance(self, drone: Drone): #distance from target
         distance_array = self.discretize_state(drone)
         distance = (distance_array[0]**2+distance_array[1]**2)**0.5
         return distance
@@ -43,17 +42,17 @@ class CustomController(FlightController):
             return -50  
         else:
             return 10-distance #reward for getting closer punishes for getting further away
-    def update_q_vals(self,episode):
-        G = 0
+    def update_q_vals(self,episode): 
+        G = 0 
         visited = set() #set unordered
-        for state, index, reward in reversed(episode): #reverse as we are working backwards
+        for state, index, reward in reversed(episode): #unpack in reverse as we are working backwards
             G = reward + self.gamma * G  #g continually updated according to MC formula
             if (state, index) not in visited: #state-action pair only visited once per episode 
                 visited.add((state, index))  
                 if state not in self.q_values: 
                     self.q_values[state] = np.full(len(self.actions), 0.1) #small initial value
                 self.q_values[state][index] += self.alpha * (G - self.q_values[state][index])
-          
+   
     def train(self,drone: Drone):
         epochs = 10000 #number of training loops
         cumulative_rewards=[] 
@@ -76,11 +75,11 @@ class CustomController(FlightController):
                 episode.append((state,index,reward)) #collect together for use in update_q_vals
                
                 
-                #if drone.has_reached_target_last_update:
-                 #   #print(f"Target reached at step {i}")
-                 #   cumulative_rewards.append(cumulative_reward)
-                 #   break
-                if self.distance(drone) > 10:
+                if drone.has_reached_target_last_update: #this makes simulation stop after target reached, for all 4 targets comment this out.
+                    #print(f"Target reached at step {i}")
+                    cumulative_rewards.append(cumulative_reward)
+                    break
+                if self.distance(drone) > 10: #has already recieved large punishment for this to discourage behaviour
                     #print(f"Drone has gone too far from the target at step {i}")
                     break
             self.update_q_vals(episode)
@@ -92,7 +91,7 @@ class CustomController(FlightController):
     def get_thrusts(self, drone: Drone,training=False) -> Tuple[float, float]:
         state=self.discretize_state(drone)
         if state not in self.q_values:
-            self.q_values[state]=np.full(len(self.actions), 1.0)#small initial value to encourage exploration
+            self.q_values[state]=np.full(len(self.actions), 0.1)#small initial value to encourage exploration
         if training:
             if np.random.rand() < self.epsilon: #epsilon greedy movement strategy - happy this works as expected
                 index=np.random.randint(len(self.actions))

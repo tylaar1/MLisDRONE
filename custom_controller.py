@@ -34,8 +34,8 @@ class CustomController(FlightController):
 
         self.actions = [ #as there are many options here we may get curse of dimensionality
             (round(thrust_left,2), round(thrust_right,2)) #round due to floating points
-            for thrust_left in np.arange(0, 1.25, 0.25) #changing to 0.2 would quater curse dimensionality - experiment for when model working
-            for thrust_right in np.arange(0, 1.25, 0.25)
+            for thrust_left in np.arange(0, 1.25, 0.25) 
+            for thrust_right in np.arange(0, 1.25, 0.25) 
         ]
         #print(len(self.actions))
         self.q_values={}
@@ -59,29 +59,31 @@ class CustomController(FlightController):
             return -50  
         else:
             return 10-distance #reward for getting closer punishes for getting further away
-    def update_q_vals(self, drone: Drone, state, index,reward, new_state):
+    def update_q_vals(self, state, index, reward, new_state):
+        if state not in self.q_values:
+            self.q_values[state] = np.full(len(self.actions), 0.1)  #initialise q values to 0.1
+        if new_state not in self.q_values:
+            self.q_values[new_state] = np.full(len(self.actions), 0.1)
+
         max_q_new_state = np.max(self.q_values[new_state])
-        q_current =self.q_values[state][index]
-        new_q = q_current + self.alpha * (reward + self.gamma * max_q_new_state - q_current)
-        #print('new_q:',new_q)
-        return new_q
+        q_current = self.q_values[state][index]
+        self.q_values[state][index] = q_current + self.alpha * (reward + self.gamma * max_q_new_state - q_current)         
+   
           
     def train(self,drone: Drone):
-        epochs = 1000 #number of training loops
+        epochs = 10000 #number of training loops
         cumulative_rewards=[] 
         for i in range(epochs): 
             drone = self.init_drone() #reset the drone
             actions=self.get_max_simulation_steps() #actions and delta time are set to equal what they are in pygame simulation
             delta_time= 10*self.get_time_interval()  
+         
             cumulative_reward=0 
             for i in range(actions):
                 state=self.discretize_state(drone)
                 thrusts = self.get_thrusts(drone,training=True) 
                 index = thrusts[1] 
-                 
-                #reward = self.reward(drone)
-                #cumulative_reward += reward
-                #print(thrusts) #doesnt appear to currently be 
+            
                 drone.set_thrust(thrusts) #take action
                 drone.step_simulation(delta_time=delta_time) #update drone state
                 new_state=self.discretize_state(drone) 
@@ -90,9 +92,9 @@ class CustomController(FlightController):
                 #print(f"Drone Position: ({drone.x}, {drone.y}), Velocity: ({drone.velocity_x}, {drone.velocity_y})")
 
                 if new_state not in self.q_values:
-                    self.q_values[new_state]=np.full(len(self.actions), 1.0)
-                self.q_values[new_state][index]=self.update_q_vals(drone, state, index, reward, new_state)
-                cumulative_reward += reward
+                    self.q_values[new_state]=np.full(len(self.actions), 0.1)
+                self.update_q_vals(state, index, reward, new_state)
+                
                 
                 if drone.has_reached_target_last_update:
                     #print(f"Target reached at step {i}")
@@ -108,8 +110,6 @@ class CustomController(FlightController):
          
     def get_thrusts(self, drone: Drone,training=False) -> Tuple[float, float]:
         state=self.discretize_state(drone)
-        if state not in self.q_values:
-            self.q_values[state]=np.full(len(self.actions), 1.0)#small initial value to encourage exploration
         if training:
             if np.random.rand() < self.epsilon: #epsilon greedy movement strategy - happy this works as expected
                 index=np.random.randint(len(self.actions))

@@ -12,10 +12,10 @@ import os
 class MCController(FlightController):
 
     def __init__(self):
-        self.alpha=0.1 #later these should have ways of varying these parameters to compare results
+        self.alpha=0.05 #later these should have ways of varying these parameters to compare results
         self.gamma=0.9
         self.epsilon=1
-        self.epsilon_decay=0.01
+        self.epsilon_decay=0.001
         self.epsilon_min=0.1
 
         self.actions = [ 
@@ -25,7 +25,7 @@ class MCController(FlightController):
         ]
         self.q_values={}
         self.state_size=24 #maximum state space is 10 from target
-        '''should this be based around centre of screen or drone?'''
+        
 
     def discretize_state(self, drone:Drone):
         x_target,y_target=drone.get_next_target()
@@ -61,11 +61,11 @@ class MCController(FlightController):
         if drone.has_reached_target_last_update: 
             reward = reward + 100
         
-        elif distance > 9: #if drone goes too far from target enforce large punishment
+        elif distance > 0.9: #if drone goes too far from target enforce large punishment
             return -50  
-        elif distance <= 9:
-            reward = reward +(10-distance) #reward for getting closer punishes for getting further away
-        
+        elif distance <= 0.9:
+            reward = reward +10*(5-(10*distance)) #reward for getting closer punishes for getting further away
+        #print(distance)
         ## DIRECTIONALITY ##
         # want to encourage directionality in the direction of the target python main.py
         
@@ -76,9 +76,9 @@ class MCController(FlightController):
         distance_mag = np.linalg.norm(distance_vector)
         distance_unit = distance_vector/(distance_mag+1e-9)
         directionality = np.dot(velocity_unit,distance_unit) #1=perfectly aligned -1 oppositely aligned
-        reward += 50*directionality#places less importance when further away (this bit is experimental can be adapted)
-        if abs(drone.pitch_velocity) > 10:
-            reward -= (drone.pitch_velocity)**2 #punish for spinning too fast 
+        reward += 10*directionality
+        #if abs(drone.pitch_velocity) > 10:
+        #    reward -= (drone.pitch_velocity)**2 #punish for spinning too fast 
         return reward
         
     def update_q_vals(self,episode): 
@@ -93,11 +93,11 @@ class MCController(FlightController):
                 self.q_values[state][index] += self.alpha * (G - self.q_values[state][index])
    
     def train(self,drone: Drone):
-        epochs = 100 # number of training loops - 1000
+        epochs = 10000 # number of training loops - 1000
         cumulative_rewards=[] 
         for i in range(epochs): 
             drone = self.init_drone() #reset the drone
-            actions=10*self.get_max_simulation_steps() #actions and delta time are set to equal what they are in pygame simulation
+            actions=self.get_max_simulation_steps() #actions and delta time are set to equal what they are in pygame simulation
             delta_time= self.get_time_interval() #it is rare to actually leave a state in a given step so check every 10 steps
             #times by 10 while experimenting with this
             episode=[]

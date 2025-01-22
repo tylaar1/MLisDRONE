@@ -101,7 +101,7 @@ class Drone():
         if distance_to_target < self.game_target_size:
             if len(self.target_coordinates) > 0:
                 #print('target reached') 
-                self.target_coordinates.pop(0)
+                #self.target_coordinates.pop(0)
                 self.has_reached_target_last_update = True
 
 

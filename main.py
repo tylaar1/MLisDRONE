@@ -8,7 +8,6 @@ from flight_controller import FlightController
 #
 #---------------------WRITE YOUR OWN CODE HERE------------------------#
 from heuristic_controller import HeuristicController
-from custom_controller import CustomController
 from monte_carlo import MCController
 
 def generate_controller() -> FlightController:

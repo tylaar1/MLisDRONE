@@ -27,7 +27,9 @@ class MCController(FlightController):
         x_target,y_target=drone.get_next_target()
         x_dist=drone.x-x_target #this should be acceptable regardless of which way around it is as learns same pattern
         y_dist=drone.y-y_target
-        state=np.array([int(x_dist*10),int(y_dist*10)]) #*10 means round to nearest .1 rather than 1, int works by truncating rather than traditional rounding
+        targets_remaining = len(drone.target_coordinates)
+        state=np.array([int(x_dist*10),int(y_dist*10),targets_remaining]) #*10 means round to nearest .1 rather than 1, int works by truncating rather than traditional rounding
+        
         return tuple(np.clip(state, 1-self.state_size, self.state_size - 1)) #state can be no more than 9 away from target in either direction
     #room to expand state to include velocity,pitch
     def distance(self, drone: Drone): #distance from target
@@ -54,7 +56,7 @@ class MCController(FlightController):
                 self.q_values[state][index] += self.alpha * (G - self.q_values[state][index])
    
     def train(self,drone: Drone):
-        epochs = 10000 #number of training loops
+        epochs = 30000 #number of training loops
         cumulative_rewards=[] 
         for i in range(epochs): 
             drone = self.init_drone() #reset the drone
@@ -74,11 +76,12 @@ class MCController(FlightController):
                 cumulative_reward += reward
                 episode.append((state,index,reward)) #collect together for use in update_q_vals
                
-                
+                '''
                 if drone.has_reached_target_last_update: #this makes simulation stop after target reached, for all 4 targets comment this out.
                     #print(f"Target reached at step {i}")
                     cumulative_rewards.append(cumulative_reward)
                     break
+                '''
                 if self.distance(drone) > 10: #has already recieved large punishment for this to discourage behaviour
                     #print(f"Drone has gone too far from the target at step {i}")
                     break

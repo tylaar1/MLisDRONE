@@ -1,3 +1,5 @@
+# testing github
+
 from flight_controller import FlightController
 from drone import Drone
 from typing import Tuple
@@ -5,7 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
-'''potential problem: drone doesnt get enough experience of unfamiliar paths to gneralise well to them, should put drone in a variety of situations to learn from'''
+'''potential problem: drone doesnt get enough experience of unfamiliar paths to generalise well to them, should put drone in a variety of situations to learn from'''
 
 class MCController(FlightController):
 
@@ -24,6 +26,7 @@ class MCController(FlightController):
         self.q_values={}
         self.state_size=24 #maximum state space is 10 from target
         '''should this be based around centre of screen or drone?'''
+
     def discretize_state(self, drone:Drone):
         x_target,y_target=drone.get_next_target()
         x_dist=drone.x-x_target #this should be acceptable regardless of which way around it is as learns same pattern
@@ -37,26 +40,34 @@ class MCController(FlightController):
         np.round(drone.pitch_velocity * 10),
         ])
         return tuple(np.clip(state, 1-self.state_size, self.state_size - 1))
+    
     def distance(self, drone: Drone): #distance from target
-        distance_array = self.discretize_state(drone)
-        distance = (distance_array[0]**2+distance_array[1]**2)**0.5 #this is now log scaled - should it be?
-        return distance
+        x_target,y_target=drone.get_next_target()
+        x_dist=drone.x-x_target #this should be acceptable regardless of which way around it is as learns same pattern
+        y_dist=drone.y-y_target
+        # distance_array = self.discretize_state(drone)
+        # distance = (distance_array[0]**2+distance_array[1]**2)**0.5 #this is now log scaled - should it be?
+        Euclid_D = np.sqrt(x_dist**2 + y_dist**2)
+        return Euclid_D
+    
+    
+
     def reward(self,drone: Drone):
         reward=0
-        'distance component'
+        ## DISTANCE COMPONENT ##
         #this bit needs adjusting to log scaling
         
         distance = self.distance(drone)
         if drone.has_reached_target_last_update: 
             reward = reward + 100
-        '''
+        
         elif distance > 9: #if drone goes too far from target enforce large punishment
             return -50  
         elif distance <= 9:
             reward = reward +(10-distance) #reward for getting closer punishes for getting further away
-        '''
-        'directionality component'
-        #want to encourage directionality in the direction of the target python main.py
+        
+        ## DIRECTIONALITY ##
+        # want to encourage directionality in the direction of the target python main.py
         
         velocity_vector = (drone.velocity_x,drone.velocity_y)
         velocity_mag = np.linalg.norm(velocity_vector)
@@ -82,7 +93,7 @@ class MCController(FlightController):
                 self.q_values[state][index] += self.alpha * (G - self.q_values[state][index])
    
     def train(self,drone: Drone):
-        epochs = 1000 #number of training loops
+        epochs = 100 # number of training loops - 1000
         cumulative_rewards=[] 
         for i in range(epochs): 
             drone = self.init_drone() #reset the drone
@@ -112,7 +123,7 @@ class MCController(FlightController):
                     cumulative_rewards.append(cumulative_reward)
                     break
                 
-                if self.distance(drone) > 25: #has already recieved large punishment for this to discourage behaviour
+                if self.distance(drone) > 1: #has already recieved large punishment for this to discourage behaviour
                     #print(f"Drone has gone too far from the target at step {i}")
                     break
                 

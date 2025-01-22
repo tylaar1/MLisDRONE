@@ -5,25 +5,24 @@ import numpy as np
 import math
 from typing import Tuple
 from flight_controller import FlightController
-
+#
 #---------------------WRITE YOUR OWN CODE HERE------------------------#
 from heuristic_controller import HeuristicController
-from Qlearning_controller import CustomController
+from custom_controller import CustomController
+from monte_carlo import MCController
 
 def generate_controller() -> FlightController:
-    controller = CustomController()
-    if controller is None:
-        print("Model creation failed.")
+    return MCController() 
+    #return CustomController()
 
 def is_training() -> bool:
-    return True # <--- Replace this with True if you want to train, false otherwise - this currently throws error not sure why
+    return True # <--- Replace this with True if you want to train, false otherwise
 def is_saving() -> bool:
-    return False # <--- Replace this with True if you want to save the results of training, false otherwise
+    return True # <--- Replace this with True if you want to save the results of training, false otherwise
 
 #---------------------------------------------------------------------#
 SCREEN_WIDTH = 720
 SCREEN_HEIGHT = 480
-
 
 def get_scale():
     return min(SCREEN_HEIGHT, SCREEN_WIDTH)
@@ -56,7 +55,6 @@ def main(controller: FlightController):
     
     # Initalise the drone
     drone = controller.init_drone()
-    
     simulation_step_counter = 0
     max_simulation_steps = controller.get_max_simulation_steps()
     delta_time = controller.get_time_interval()
@@ -71,6 +69,7 @@ def main(controller: FlightController):
 
         # --- Begin Physics --- #
         # Get the thrust information from the controller
+        #print(controller.get_thrusts(drone),'this one')
         drone.set_thrust(controller.get_thrusts(drone))
         # Update the simulation
         drone.step_simulation(delta_time)
@@ -94,6 +93,7 @@ def main(controller: FlightController):
         simulation_step_counter+=1
         if (simulation_step_counter>max_simulation_steps):
             drone = controller.init_drone() # Reset the drone
+            drone.target_coordinates.pop(0) #to check if generalises to other targets - comment out for main simulation
             simulation_step_counter = 0
 
     
@@ -115,13 +115,14 @@ def draw_drone(screen: pygame.Surface, drone: Drone, drone_img: pygame.Surface):
     screen.blit(rotated_drone_img, drone_scaled_rect)
 
 if __name__ == "__main__":
-
+    drone=Drone()
     controller = generate_controller()
     if is_training():
-        controller.train()
+        controller.train(drone)  # No error here, as 'self' refers to the instance
         if is_saving():
-            controller.save()        
+            controller.save()      
     else:
         controller.load()
-    
-    main(controller)
+        print('succesfully loaded file')
+    main(controller) 
+    ''' this runs simulation after training - dont need for now but uncomment to visualise'''

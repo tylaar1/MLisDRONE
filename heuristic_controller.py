@@ -2,7 +2,7 @@ import numpy as np
 from flight_controller import FlightController
 from drone import Drone
 from typing import Tuple
-
+#
 class HeuristicController(FlightController):
 
 

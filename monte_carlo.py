@@ -22,27 +22,54 @@ class MCController(FlightController):
             for thrust_right in np.arange(0, 1.25, 0.25)
         ]
         self.q_values={}
-        self.state_size=10 #maximum state space is 10 from target
+        self.state_size=24 #maximum state space is 10 from target
         '''should this be based around centre of screen or drone?'''
     def discretize_state(self, drone:Drone):
         x_target,y_target=drone.get_next_target()
         x_dist=drone.x-x_target #this should be acceptable regardless of which way around it is as learns same pattern
         y_dist=drone.y-y_target
-        state=np.array([int(x_dist*10),int(y_dist*10),int(drone.velocity_x*10),int(drone.velocity_y*10)]) #*10 means round to nearest .1 rather than 1, int works by truncating rather than traditional rounding
-        return tuple(np.clip(state, 1-self.state_size, self.state_size - 1)) #state can be no more than 9 away from target in either direction
-    #room to expand state to include velocity,pitch
+        state = np.array([
+        np.round(10*np.sign(x_dist) * np.log1p(abs(x_dist * 10))), #x10 increases number of states
+        np.round(10*np.sign(y_dist) * np.log1p(abs(y_dist * 10))),
+        np.round(10*np.sign(drone.velocity_x) * np.log1p(abs(drone.velocity_x * 10))),
+        np.round(10*np.sign(drone.velocity_y) * np.log1p(abs(drone.velocity_y * 10))),
+        np.round(drone.pitch * 10),
+        np.round(drone.pitch_velocity * 10),
+        ])
+        return tuple(np.clip(state, 1-self.state_size, self.state_size - 1))
     def distance(self, drone: Drone): #distance from target
         distance_array = self.discretize_state(drone)
-        distance = (distance_array[0]**2+distance_array[1]**2)**0.5
+        distance = (distance_array[0]**2+distance_array[1]**2)**0.5 #this is now log scaled - should it be?
         return distance
     def reward(self,drone: Drone):
+        reward=0
+        'distance component'
+        #this bit needs adjusting to log scaling
+        
         distance = self.distance(drone)
         if drone.has_reached_target_last_update: 
-            return 100
-        if distance > 9: #if drone goes too far from target enforce large punishment
+            reward = reward + 100
+        '''
+        elif distance > 9: #if drone goes too far from target enforce large punishment
             return -50  
-        else:
-            return 10-distance #reward for getting closer punishes for getting further away
+        elif distance <= 9:
+            reward = reward +(10-distance) #reward for getting closer punishes for getting further away
+        '''
+        'directionality component'
+        #want to encourage directionality in the direction of the target python main.py
+        
+        velocity_vector = (drone.velocity_x,drone.velocity_y)
+        velocity_mag = np.linalg.norm(velocity_vector)
+        velocity_unit = velocity_vector/(velocity_mag+1e-9)#prevent /0 error
+        distance_vector = (drone.x-drone.get_next_target()[0],drone.y-drone.get_next_target()[1])
+        distance_mag = np.linalg.norm(distance_vector)
+        distance_unit = distance_vector/(distance_mag+1e-9)
+        directionality = np.dot(velocity_unit,distance_unit) #1=perfectly aligned -1 oppositely aligned
+        reward += 50*directionality#places less importance when further away (this bit is experimental can be adapted)
+        if abs(drone.pitch_velocity) > 10:
+            reward -= (drone.pitch_velocity)**2 #punish for spinning too fast 
+        return reward
+        
     def update_q_vals(self,episode): 
         G = 0 
         visited = set() #set unordered
@@ -55,15 +82,17 @@ class MCController(FlightController):
                 self.q_values[state][index] += self.alpha * (G - self.q_values[state][index])
    
     def train(self,drone: Drone):
-        epochs = 10000 #number of training loops
+        epochs = 1000 #number of training loops
         cumulative_rewards=[] 
         for i in range(epochs): 
             drone = self.init_drone() #reset the drone
             actions=10*self.get_max_simulation_steps() #actions and delta time are set to equal what they are in pygame simulation
-            delta_time= 10*self.get_time_interval() #it is rare to actually leave a state in a given step so check every 10 steps
+            delta_time= self.get_time_interval() #it is rare to actually leave a state in a given step so check every 10 steps
             #times by 10 while experimenting with this
             episode=[]
             cumulative_reward=0 
+            if i%100==0:
+                print('epoch:',i)
             for i in range(actions):
                 state=self.discretize_state(drone)
                 thrusts = self.get_thrusts(drone,training=True) 
@@ -75,16 +104,18 @@ class MCController(FlightController):
                 reward = self.reward(drone)
                 cumulative_reward += reward
                 episode.append((state,index,reward)) #collect together for use in update_q_vals
-               
+                #print(drone.pitch_velocity)
                 
                 if drone.has_reached_target_last_update: #this makes simulation stop after target reached, for all 4 targets comment this out.
                     #print(f"Target reached at step {i}")
                     #print(drone.velocity_x,drone.velocity_y)
                     cumulative_rewards.append(cumulative_reward)
                     break
-                if self.distance(drone) > 10: #has already recieved large punishment for this to discourage behaviour
+                
+                if self.distance(drone) > 25: #has already recieved large punishment for this to discourage behaviour
                     #print(f"Drone has gone too far from the target at step {i}")
                     break
+                
             self.update_q_vals(episode)
             cumulative_rewards.append(cumulative_reward)
             #print(self.q_values) 
@@ -106,6 +137,8 @@ class MCController(FlightController):
                 max_q_val = np.max(q_vals)
                 max_q_indices = np.flatnonzero(q_vals == max_q_val) #indexes of max q vals
                 index = np.random.choice(max_q_indices)  #for when 2 q vals have same max
+                self.epsilon *= (1 - self.epsilon_decay)
+                self.epsilon=max(self.epsilon,self.epsilon_min) 
                 return self.actions[index],index
         else:
             q_vals= self.q_values[state]

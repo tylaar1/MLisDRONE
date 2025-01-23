@@ -9,10 +9,10 @@ import os
 class MCController(FlightController):
 
     def __init__(self):
-        self.alpha=0.1 #later these should have ways of varying these parameters to compare results
+        self.alpha=0.05 #later these should have ways of varying these parameters to compare results
         self.gamma=0.9
         self.epsilon=1
-        self.epsilon_decay=0.01
+        self.epsilon_decay=0.001
         self.epsilon_min=0.1
 
         self.actions = [ 
@@ -76,18 +76,23 @@ class MCController(FlightController):
                 cumulative_reward += reward
                 episode.append((state,index,reward)) #collect together for use in update_q_vals
                
-                '''
+                
                 if drone.has_reached_target_last_update: #this makes simulation stop after target reached, for all 4 targets comment this out.
                     #print(f"Target reached at step {i}")
-                    cumulative_rewards.append(cumulative_reward)
+                    
                     break
-                '''
+                
                 if self.distance(drone) > 10: #has already recieved large punishment for this to discourage behaviour
                     #print(f"Drone has gone too far from the target at step {i}")
                     break
             self.update_q_vals(episode)
             cumulative_rewards.append(cumulative_reward)
             #print(self.q_values) 
+        plt.plot(range(1,epochs+1),cumulative_rewards)
+        plt.xlabel('Epochs')
+        plt.ylabel('Cumulative Reward')
+        plt.show()
+        #we should do this multiple times and get average and standard deviation for plotting purposes
         print(self.q_values)  
         print('cumulative reward array:',cumulative_rewards)
          

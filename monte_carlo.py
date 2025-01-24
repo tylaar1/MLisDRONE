@@ -4,6 +4,7 @@ from typing import Tuple
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+import pandas as pd
 
 
 class MCController(FlightController):
@@ -55,46 +56,90 @@ class MCController(FlightController):
                     self.q_values[state] = np.full(len(self.actions), 0.1) #small initial value
                 self.q_values[state][index] += self.alpha * (G - self.q_values[state][index])
    
-    def train(self,drone: Drone):
-        epochs = 30000 #number of training loops
-        cumulative_rewards=[] 
-        for i in range(epochs): 
-            drone = self.init_drone() #reset the drone
-            actions=self.get_max_simulation_steps() #actions and delta time are set to equal what they are in pygame simulation
-            delta_time= 10*self.get_time_interval() #it is rare to actually leave a state in a given step so check every 10 steps
-            episode=[]
-            cumulative_reward=0 
-            for i in range(actions):
-                state=self.discretize_state(drone)
-                thrusts = self.get_thrusts(drone,training=True) 
-                index = thrusts[1] 
+    # def train(self,drone: Drone):
+    #     epochs = 10000 #number of training loops
+    #     cumulative_rewards=[] 
+    #     for i in range(epochs): 
+    #         drone = self.init_drone() #reset the drone
+    #         actions=self.get_max_simulation_steps() #actions and delta time are set to equal what they are in pygame simulation
+    #         delta_time= 10*self.get_time_interval() #it is rare to actually leave a state in a given step so check every 10 steps
+    #         episode=[]
+    #         cumulative_reward=0 
+    #         for i in range(actions):
+    #             state=self.discretize_state(drone)
+    #             thrusts = self.get_thrusts(drone,training=True) 
+    #             index = thrusts[1] 
                   
-                drone.set_thrust(thrusts) #take action
-                drone.step_simulation(delta_time=delta_time) #update drone state
+    #             drone.set_thrust(thrusts) #take action
+    #             drone.step_simulation(delta_time=delta_time) #update drone state
                
-                reward = self.reward(drone)
-                cumulative_reward += reward
-                episode.append((state,index,reward)) #collect together for use in update_q_vals
+    #             reward = self.reward(drone)
+    #             cumulative_reward += reward
+    #             episode.append((state,index,reward)) #collect together for use in update_q_vals
                
                 
-                if drone.has_reached_target_last_update: #this makes simulation stop after target reached, for all 4 targets comment this out.
-                    #print(f"Target reached at step {i}")
+    #             if drone.has_reached_target_last_update: #this makes simulation stop after target reached, for all 4 targets comment this out.
+    #                 #print(f"Target reached at step {i}")
                     
-                    break
+    #                 break
                 
-                if self.distance(drone) > 10: #has already recieved large punishment for this to discourage behaviour
-                    #print(f"Drone has gone too far from the target at step {i}")
-                    break
-            self.update_q_vals(episode)
-            cumulative_rewards.append(cumulative_reward)
-            #print(self.q_values) 
-        plt.plot(range(1,epochs+1),cumulative_rewards)
-        plt.xlabel('Epochs')
-        plt.ylabel('Cumulative Reward')
-        plt.show()
-        #we should do this multiple times and get average and standard deviation for plotting purposes
-        print(self.q_values)  
-        print('cumulative reward array:',cumulative_rewards)
+    #             if self.distance(drone) > 10: #has already recieved large punishment for this to discourage behaviour
+    #                 #print(f"Drone has gone too far from the target at step {i}")
+    #                 break
+    #         self.update_q_vals(episode)
+    #         cumulative_rewards.append(cumulative_reward)
+    #     #we should do this multiple times and get average and standard deviation for plotting purposes
+    #     print(self.q_values)  
+    #     print('cumulative reward array:',cumulative_rewards)
+    #     # SAVING THE PLOTTED DATA
+    #     epochs_array = np.array(range(1, epochs + 1))
+    #     cumulative_rewards_array = np.array(cumulative_rewards)
+
+    #     # Save the arrays
+    #     np.save('./epochs.npy', epochs_array)
+    #     np.save('./cumulative_rewards.npy', cumulative_rewards_array)
+    
+    def train(self, drone: Drone, runs=10, epochs=10000):
+        cumulative_rewards_runs = []
+
+        for run in range(runs):
+            cumulative_rewards = []  # Store rewards for this run
+            for epoch in range(epochs):
+                drone = self.init_drone()  # Reset the drone
+                actions = self.get_max_simulation_steps()
+                delta_time = 10 * self.get_time_interval()
+                episode = []
+                cumulative_reward = 0
+
+                for step in range(actions):
+                    state = self.discretize_state(drone)
+                    thrusts = self.get_thrusts(drone, training=True)
+                    index = thrusts[1]
+
+                    drone.set_thrust(thrusts)  # Take action
+                    drone.step_simulation(delta_time=delta_time)  # Update drone state
+
+                    reward = self.reward(drone)
+                    cumulative_reward += reward
+                    episode.append((state, index, reward))  # Collect data for Q-update
+
+                    if drone.has_reached_target_last_update:  # Stop if target reached
+                        break
+
+                    if self.distance(drone) > 10:  # Penalize if drone goes too far
+                        break
+
+                self.update_q_vals(episode)
+                cumulative_rewards.append(cumulative_reward)
+
+            cumulative_rewards_runs.append(cumulative_rewards)
+
+        # Create a DataFrame for all runs
+        df = pd.DataFrame(cumulative_rewards_runs).transpose()
+        df.columns = [f'Run_{i + 1}' for i in range(runs)]
+
+        # Save the DataFrame to a CSV
+        df.to_csv('./cumulative_rewards.csv', index_label='Epoch')
          
     def get_thrusts(self, drone: Drone,training=False) -> Tuple[float, float]:
         state=self.discretize_state(drone)
@@ -118,11 +163,21 @@ class MCController(FlightController):
             max_q_indices = np.flatnonzero(q_vals == max_q_val) #indexes of max q vals
             index = np.random.choice(max_q_indices)  #for when 2 q vals have same max
             return self.actions[index],index
-    def load(self,filename="q_values.npy"):
-        q_values_list = np.load(filename, allow_pickle=True)
-        self.q_values = {state: q_vals for state, q_vals in q_values_list}
-        print('Q-values loaded from', filename) 
-    def save(self,filename="q_values.npy"):
-        q_values_list = [(state, q_vals) for state, q_vals in self.q_values.items()]
-        np.save(filename, q_values_list,allow_pickle=True)
-        print('Q-values saved to', filename) 
+    
+    def save(self, filename="q_tables.npy"):
+        # Convert q_values to a format that can be saved
+        saveable_q_values = {
+            str(state): values.tolist()  # Convert NumPy arrays to lists
+            for state, values in self.q_values.items()
+        }
+        np.save(filename, saveable_q_values, allow_pickle=True)
+        print('Q-values saved to', filename)
+
+    def load(self, filename="q_tables.npy"):
+        loaded_values = np.load(filename, allow_pickle=True).item()
+        # Convert back to original format with NumPy arrays
+        self.q_values = {
+            eval(str(state)): np.array(values)
+            for state, values in loaded_values.items()
+        }
+        print('Q-values loaded from', filename)

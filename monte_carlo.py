@@ -56,7 +56,7 @@ class MCController(FlightController):
                 self.q_values[state][index] += self.alpha * (G - self.q_values[state][index])
    
     def train(self,drone: Drone):
-        epochs = 30000 #number of training loops
+        epochs = 300 #number of training loops
         cumulative_rewards=[] 
         for i in range(epochs): 
             drone = self.init_drone() #reset the drone
@@ -93,9 +93,13 @@ class MCController(FlightController):
         plt.ylabel('Cumulative Reward')
         plt.show()
         #we should do this multiple times and get average and standard deviation for plotting purposes
-        print(self.q_values)  
-        print('cumulative reward array:',cumulative_rewards)
-         
+        #print(self.q_values)  
+        #print('cumulative reward array:',cumulative_rewards)
+        directory = "cumulative_rewards"
+        file_path = os.path.join(directory, "cumulative_rewards_1.npy")
+        np.save(file_path, cumulative_rewards)
+        print(f"Cumulative rewards saved to {file_path}")
+        
     def get_thrusts(self, drone: Drone,training=False) -> Tuple[float, float]:
         state=self.discretize_state(drone)
         if state not in self.q_values:

@@ -87,18 +87,7 @@ class MCController(FlightController):
                     break
             self.update_q_vals(episode)
             cumulative_rewards.append(cumulative_reward)
-            #print(self.q_values) 
-        #plt.plot(range(1,epochs+1),cumulative_rewards)
-        #plt.xlabel('Epochs')
-        #plt.ylabel('Cumulative Reward')
-        #plt.show()
-        #we should do this multiple times and get average and standard deviation for plotting purposes
-        #print(self.q_values)  
-        #print('cumulative reward array:',cumulative_rewards)
-        #directory = "cumulative_rewards"
-        #file_path = os.path.join(directory, "cumulative_rewards_10.npy")
-        #np.save(file_path, cumulative_rewards)
-        #print(f"Cumulative rewards saved to {file_path}")
+        return np.array(cumulative_rewards)
         
     def multi_train(self,runs:int,drone: Drone,alpha):
         for a in alpha:
@@ -108,7 +97,7 @@ class MCController(FlightController):
                 results=self.train(drone)
                 directory = "cumulative_rewards"
                 file_path = os.path.join(directory, f"cumulative_rewards_{run+1}_alpha_{self.alpha}.npy")
-            np.save(file_path, results)
+                np.save(file_path, results)
             
     def get_thrusts(self, drone: Drone,training=False) -> Tuple[float, float]:
         state=self.discretize_state(drone)

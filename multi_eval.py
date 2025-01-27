@@ -1,14 +1,14 @@
 import numpy as np
 import matplotlib.pyplot as plt
-file_path1 = "cumulative_rewards/cumulative_rewards_1.npy"
-file_path2 = "cumulative_rewards/cumulative_rewards_2.npy"
-file_path3 = "cumulative_rewards/cumulative_rewards_3.npy"
-file_path4 = "cumulative_rewards/cumulative_rewards_4.npy"
-file_path5 = "cumulative_rewards/cumulative_rewards_5.npy"
-file_path6 = "cumulative_rewards/cumulative_rewards_6.npy"
-file_path7 = "cumulative_rewards/cumulative_rewards_7.npy"
-file_path8 = "cumulative_rewards/cumulative_rewards_8.npy"
-file_path9  = "cumulative_rewards/cumulative_rewards_9.npy"
+file_path1 = "cumulative_rewards/cumulative_rewards_1_alpha_0.01.npy"
+file_path2 = "cumulative_rewards/cumulative_rewards_2_alpha_0.01.npy"
+file_path3 = "cumulative_rewards/cumulative_rewards_3_alpha_0.01.npy"
+file_path4 = "cumulative_rewards/cumulative_rewards_1_alpha_0.05.npy"
+file_path5 = "cumulative_rewards/cumulative_rewards_2_alpha_0.05.npy"
+file_path6 = "cumulative_rewards/cumulative_rewards_3_alpha_0.05.npy"
+file_path7 = "cumulative_rewards/cumulative_rewards_1_alpha_0.1.npy"
+file_path8 = "cumulative_rewards/cumulative_rewards_2_alpha_0.1.npy"
+file_path9  = "cumulative_rewards/cumulative_rewards_3_alpha_0.1.npy"
 #file_path10 = "cumulative_rewards/cumulative_rewards_10.npy"
 
 
@@ -32,7 +32,7 @@ def rolling_average(arr, ROLLING_WINDOW_SIZE):
     return np.array((cumsum[ROLLING_WINDOW_SIZE - 1:] / ROLLING_WINDOW_SIZE))
 
 
-def plot_avg_std(*arrays):
+def plot_avg_std(color,*arrays):
 
     data = np.array(arrays)
     mean = np.mean(data, axis=0)
@@ -41,8 +41,8 @@ def plot_avg_std(*arrays):
 
     iteration = np.arange(len(mean))
     plt.figure(figsize=(10, 6))
-    plt.plot(iteration, mean, label='Mean', color='blue', lw=2)
-    plt.fill_between(iteration, mean - std_dev, mean + std_dev, color='blue', alpha=0.2, label='Standard Deviation')
+    plt.plot(iteration, mean, label='Mean', color=color, lw=2)
+    plt.fill_between(iteration, mean - std_dev, mean + std_dev, color=color, alpha=0.2, label='Standard Deviation')
     
     plt.xlabel('Iteration')
     plt.ylabel('Value')
@@ -61,4 +61,6 @@ rolling_average7 = rolling_average(cumulative_rewards7, 500)
 rolling_average8 = rolling_average(cumulative_rewards8, 500)
 rolling_average9 = rolling_average(cumulative_rewards9, 500)
 #rolling_average10 = rolling_average(cumulative_rewards10, 500)
-plot_avg_std(rolling_average1, rolling_average2, rolling_average3, rolling_average4, rolling_average5, rolling_average6, rolling_average7, rolling_average8, rolling_average9)
+plot_avg_std('blue',rolling_average1, rolling_average2, rolling_average3)
+plot_avg_std('red',rolling_average4, rolling_average5, rolling_average6)
+plot_avg_std('green',rolling_average7, rolling_average8, rolling_average9)

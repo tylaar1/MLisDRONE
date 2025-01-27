@@ -10,10 +10,11 @@ from flight_controller import FlightController
 from heuristic_controller import HeuristicController
 from custom_controller import CustomController
 from monte_carlo import MCController
+from Ben_monte_carlo import Ben_MCController
 
 def generate_controller() -> FlightController:
-    return MCController() 
-    #return CustomController()
+    # return MCController() 
+    return Ben_MCController()
 
 def is_training() -> bool:
     return True # <--- Replace this with True if you want to train, false otherwise

@@ -9,7 +9,7 @@ def rolling_average(arr, ROLLING_WINDOW_SIZE):
 
 
     
-def plot_avg_std(color,array,start,end):
+def plot_avg_std(color,array,start,end,alpha):
     
     data = np.array(array[start:end])
     mean = np.mean(data, axis=0)
@@ -17,9 +17,9 @@ def plot_avg_std(color,array,start,end):
     
     iteration = np.arange(len(mean))
     
-    plt.plot(iteration, mean, label='Mean', color=color, lw=2)
-    plt.fill_between(iteration, mean - std_dev, mean + std_dev, color=color, alpha=0.2, label='Standard Deviation')
-    ## Bens graph stuff
+    plt.plot(iteration, mean, label=r'$\alpha = $' + f'{alpha}', color=color, lw=2)
+    plt.fill_between(iteration, mean - std_dev, mean + std_dev, color=color, alpha=0.2)
+    
     plt.xlabel('Epochs', fontsize=14)
     plt.ylabel('Cumulative Reward', fontsize=14)
     plt.xticks(fontsize=14)
@@ -34,7 +34,7 @@ def plot_avg_std(color,array,start,end):
     plt.tick_params(which='minor', top=True, right=True, direction='in', length=4)
     plt.savefig('sd_corrected_cumrewardgraph.pdf')
     
-    ## Bens graph stuff
+   
     
 sample_size=10
 runs=range(1,sample_size+1)
@@ -55,9 +55,9 @@ print(rolling_averages.shape)
 plt.figure(figsize=(10, 6))
 total_files = len(file_paths)
 start_vals = range(0,total_files,sample_size)
-plot_avg_std('blue',rolling_averages,start_vals[0],start_vals[0]+sample_size)
-plot_avg_std('red',rolling_averages,start_vals[1],start_vals[1]+sample_size)
-plot_avg_std('green',rolling_averages,start_vals[2],start_vals[2]+sample_size)
+plot_avg_std('blue',rolling_averages,start_vals[0],start_vals[0]+sample_size,alphas[0])
+plot_avg_std('red',rolling_averages,start_vals[1],start_vals[1]+sample_size,alphas[1])
+plot_avg_std('green',rolling_averages,start_vals[2],start_vals[2]+sample_size,alphas[2])
 
 
 plt.grid(True)

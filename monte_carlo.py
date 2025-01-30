@@ -114,6 +114,8 @@ class MCController(FlightController):
                 max_q_val = np.max(q_vals)
                 max_q_indices = np.flatnonzero(q_vals == max_q_val) #indexes of max q vals
                 index = np.random.choice(max_q_indices)  #for when 2 q vals have same max
+                self.epsilon *= (1 - self.epsilon_decay)
+                self.epsilon=max(self.epsilon,self.epsilon_min)
                 return self.actions[index],index
         else:
             q_vals= self.q_values[state]

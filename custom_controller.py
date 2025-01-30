@@ -95,11 +95,12 @@ class CustomController(FlightController):
                     self.q_values[new_state]=np.full(len(self.actions), 0.1)
                 self.update_q_vals(state, index, reward, new_state)
                 
-                
+                '''
                 if drone.has_reached_target_last_update:
                     #print(f"Target reached at step {i}")
                     cumulative_rewards.append(cumulative_reward)
                     break
+                '''
                 if self.distance(drone) > 10:
                     #print(f"Drone has gone too far from the target at step {i}")
                     break

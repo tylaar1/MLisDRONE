@@ -91,12 +91,12 @@ class MCController(FlightController):
         
     def multi_train(self,runs:int,drone: Drone,alpha):
         for a in alpha:
-            self.alpha=a
+            self.gamma=a
             for run in range(runs):
                 self.q_values = {}
                 results=self.train(drone)
                 directory = "cumulative_rewards"
-                file_path = os.path.join(directory, f"cumulative_rewards_{run+1}_alpha_{self.alpha}.npy")
+                file_path = os.path.join(directory, f"cumulative_rewards_{run+1}_alpha_{self.gamma}.npy")
                 np.save(file_path, results)
             
     def get_thrusts(self, drone: Drone,training=False) -> Tuple[float, float]:

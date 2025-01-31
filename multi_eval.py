@@ -17,9 +17,9 @@ def plot_avg_std(color,array,start,end,alpha):
     
     iteration = np.arange(len(mean))
     
-    plt.plot(iteration, mean, label=r'$\alpha = $' + f'{alpha}', color=color, lw=2)
-    plt.fill_between(iteration, mean - std_dev, mean + std_dev, color=color, alpha=0.2)
-    
+    plt.plot(iteration, mean, label=r'$\gamma = $' + f'{alpha}', color=color, lw=2)
+    #plt.fill_between(iteration, mean - std_dev, mean + std_dev, color=color, alpha=0.2)
+    plt.ylim(-200,250)
     plt.xlabel('Epochs', fontsize=14)
     plt.ylabel('Cumulative Reward', fontsize=14)
     plt.xticks(fontsize=14)
@@ -38,7 +38,7 @@ def plot_avg_std(color,array,start,end,alpha):
     
 sample_size=10
 runs=range(1,sample_size+1)
-alphas=[0.01,0.05,0.1]
+alphas=[0.8,0.9,0.99]
 
 file_paths = [f"cumulative_rewards/cumulative_rewards_{i}_alpha_{j}.npy" for i in runs for j in alphas]
 cumulative_rewards = [np.load(path) for path in file_paths]

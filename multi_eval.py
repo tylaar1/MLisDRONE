@@ -9,7 +9,7 @@ def rolling_average(arr, ROLLING_WINDOW_SIZE):
 
 
     
-def plot_avg_std(color,array,start,end,alpha):
+def plot_avg_std(color,array,start,end,gamma):
     
     data = np.array(array[start:end])
     mean = np.mean(data, axis=0)
@@ -17,8 +17,8 @@ def plot_avg_std(color,array,start,end,alpha):
     
     iteration = np.arange(len(mean))
     
-    plt.plot(iteration, mean, label=r'$\alpha = $' + f'{alpha}', color=color, lw=2)
-    plt.fill_between(iteration, mean - std_dev, mean + std_dev, color=color, alpha=0.2)
+    plt.plot(iteration, mean, label=rf'$\gamma$ = {gamma}', color=color, lw=2)
+    # plt.fill_between(iteration, mean - std_dev, mean + std_dev, color=color, alpha=0.2)
     
     plt.xlabel('Epochs', fontsize=14)
     plt.ylabel('Cumulative Reward', fontsize=14)
@@ -32,15 +32,17 @@ def plot_avg_std(color,array,start,end,alpha):
     plt.tick_params(axis='both', which='major', length=6, color='black', labelsize=14)
     plt.tick_params(top=True, right=True, direction='in', length=6)
     plt.tick_params(which='minor', top=True, right=True, direction='in', length=4)
-    plt.savefig('sd_corrected_cumrewardgraph.pdf')
+    plt.savefig('varying_gamma_no_sd.pdf')
     
    
     
 sample_size=10
 runs=range(1,sample_size+1)
 alphas=[0.01,0.05,0.1]
+epsdecays = [0.01,0.001,0.0001]
+gammas = [0.1,0.5,0.9]
 
-file_paths = [f"cumulative_rewards/cumulative_rewards_{i}_alpha_{j}.npy" for i in runs for j in alphas]
+file_paths = [f"cumulative_rewards/cumulative_rewards_{i}_gamma_{j}.npy" for i in runs for j in gammas]
 cumulative_rewards = [np.load(path) for path in file_paths]
 cumulative_rewards = np.array(cumulative_rewards)  
 print(cumulative_rewards.shape)
@@ -55,9 +57,9 @@ print(rolling_averages.shape)
 plt.figure(figsize=(10, 6))
 total_files = len(file_paths)
 start_vals = range(0,total_files,sample_size)
-plot_avg_std('blue',rolling_averages,start_vals[0],start_vals[0]+sample_size,alphas[0])
-plot_avg_std('red',rolling_averages,start_vals[1],start_vals[1]+sample_size,alphas[1])
-plot_avg_std('green',rolling_averages,start_vals[2],start_vals[2]+sample_size,alphas[2])
+plot_avg_std('blue',rolling_averages,start_vals[0],start_vals[0]+sample_size,gammas[0]) # color, array, start, end, gamma
+plot_avg_std('red',rolling_averages,start_vals[1],start_vals[1]+sample_size,gammas[1])
+plot_avg_std('green',rolling_averages,start_vals[2],start_vals[2]+sample_size,gammas[2])
 
 
 plt.grid(True)

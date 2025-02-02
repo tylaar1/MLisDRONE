@@ -118,7 +118,7 @@ if __name__ == "__main__":
     drone=Drone()
     controller = generate_controller()
     if is_training():
-        controller.multi_train(10,drone,(0.8,0.9,0.99))  # No error here, as 'self' refers to the instance
+        controller.multi_train(10,drone,(0.1,0.5,0.9)) # multi_train(runs,drone,hyperparam settings to try)  # No error here, as 'self' refers to the instance
         if is_saving():
             controller.save()      
     else:

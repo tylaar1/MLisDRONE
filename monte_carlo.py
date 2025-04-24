@@ -31,16 +31,11 @@ class MCController(FlightController):
         x_target,y_target=drone.get_next_target()
         x_dist=drone.x-x_target #this should be acceptable regardless of which way around it is as learns same pattern
         y_dist=drone.y-y_target
-        state = np.array([
-        np.round(10*np.sign(x_dist) * np.log1p(abs(x_dist * 10))), #x10 increases number of states
-        np.round(10*np.sign(y_dist) * np.log1p(abs(y_dist * 10))),
-        np.round(10*np.sign(drone.velocity_x) * np.log1p(abs(drone.velocity_x * 10))),
-        np.round(10*np.sign(drone.velocity_y) * np.log1p(abs(drone.velocity_y * 10))),
-        np.round(drone.pitch * 10),
-        np.round(drone.pitch_velocity * 10),
-        ])
-        return tuple(np.clip(state, 1-self.state_size, self.state_size - 1))
-    
+        targets_remaining = len(drone.target_coordinates)
+        state=np.array([int(x_dist*10),int(y_dist*10),targets_remaining]) #*10 means round to nearest .1 rather than 1, int works by truncating rather than traditional rounding
+        
+        return tuple(np.clip(state, 1-self.state_size, self.state_size - 1)) #state can be no more than 9 away from target in either direction
+    #room to expand state to include velocity,pitch
     def distance(self, drone: Drone): #distance from target
         x_target,y_target=drone.get_next_target()
         x_dist=drone.x-x_target #this should be acceptable regardless of which way around it is as learns same pattern
@@ -119,20 +114,27 @@ class MCController(FlightController):
                 
                 if drone.has_reached_target_last_update: #this makes simulation stop after target reached, for all 4 targets comment this out.
                     #print(f"Target reached at step {i}")
-                    #print(drone.velocity_x,drone.velocity_y)
-                    cumulative_rewards.append(cumulative_reward)
+                    
                     break
                 
-                if self.distance(drone) > 1: #has already recieved large punishment for this to discourage behaviour
+                if self.distance(drone) > 10: #has already recieved large punishment for this to discourage behaviour
                     #print(f"Drone has gone too far from the target at step {i}")
                     break
                 
             self.update_q_vals(episode)
             cumulative_rewards.append(cumulative_reward)
-            #print(self.q_values) 
-        print(self.q_values)  
-        print('cumulative reward array:',cumulative_rewards)
-         
+        return np.array(cumulative_rewards)
+        
+    def multi_train(self,runs:int,drone: Drone,gamma):
+        for g in gamma:
+            self.gamma=g
+            for run in range(runs):
+                self.q_values = {}
+                results=self.train(drone)
+                directory = "cumulative_rewards"
+                file_path = os.path.join(directory, f"cumulative_rewards_{run+1}_gamma_{self.gamma}.npy")
+                np.save(file_path, results)
+            
     def get_thrusts(self, drone: Drone,training=False) -> Tuple[float, float]:
         state=self.discretize_state(drone)
         if state not in self.q_values:
@@ -149,7 +151,7 @@ class MCController(FlightController):
                 max_q_indices = np.flatnonzero(q_vals == max_q_val) #indexes of max q vals
                 index = np.random.choice(max_q_indices)  #for when 2 q vals have same max
                 self.epsilon *= (1 - self.epsilon_decay)
-                self.epsilon=max(self.epsilon,self.epsilon_min) 
+                self.epsilon=max(self.epsilon,self.epsilon_min)
                 return self.actions[index],index
         else:
             q_vals= self.q_values[state]

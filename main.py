@@ -17,7 +17,7 @@ def generate_controller() -> FlightController:
 def is_training() -> bool:
     return True # <--- Replace this with True if you want to train, false otherwise
 def is_saving() -> bool:
-    return True # <--- Replace this with True if you want to save the results of training, false otherwise
+    return False # <--- Replace this with True if you want to save the results of training, false otherwise
 
 #---------------------------------------------------------------------#
 SCREEN_WIDTH = 720
@@ -117,7 +117,7 @@ if __name__ == "__main__":
     drone=Drone()
     controller = generate_controller()
     if is_training():
-        controller.train(drone)  # No error here, as 'self' refers to the instance
+        controller.multi_train(10,drone,(0.1,0.5,0.9)) # multi_train(runs,drone,hyperparam settings to try)  # No error here, as 'self' refers to the instance
         if is_saving():
             controller.save()      
     else:
